@@ -27,7 +27,7 @@ async function setupSamples() {
 }
 
 function getPath(sound) {
-    return `/public/audio/${sound}.wav`
+    return path.join(process.cwd(),"public","assets","audio",`${sound}.wav`);
 }
 
 export function playSample(sound, volume = 1.0) {
