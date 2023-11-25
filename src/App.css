@@ -1,0 +1,175 @@
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+p {
+  margin: 0;
+}
+
+.sticking-patterns {
+  margin: 0 auto;
+  margin-top: 50px;
+  margin-bottom: 50px;
+  width: 1000px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sticking-patterns > *:not(.dragged) {
+  transform: none !important;
+}
+
+.sticking-patterns > * {
+  background-color: #f5f7f8;
+  border-radius: 4px;
+  padding: 8px;
+  letter-spacing: 4px;
+  user-select: none;
+  border: 1px solid black;
+  min-width: 70px;
+  text-align: center;
+}
+
+.sticking-patterns > .dragged {
+  background-color: gold;
+}
+
+.sticking-patterns > *:hover {
+  transform: translate(1px, -1px);
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+}
+
+.pattern {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  width: fit-content;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.beat {
+  display: flex;
+  width: 145px;
+  border-top: 2px solid black;
+  border-bottom: 2px solid black;
+  border-right: 2px solid black;
+}
+
+.dragged-over {
+  background-color: aliceblue;
+  border: 2px solid gold;
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 35px;
+}
+
+.instrument-rack {
+  border: 2px solid black;
+}
+
+.instrument {
+  display: flex;
+  align-items: center;
+  height: 35px;
+  width: 70px;
+  padding-inline-start: 5px;
+  box-shadow: inset 0 1px black;
+  text-transform: capitalize;
+}
+
+.placeholder {
+  background-color: black;
+}
+
+.note {
+  width: 100%;
+  /* background-color: white; */
+  border-right: 1px solid black;
+  box-shadow: inset 0 1px black;
+  font-weight: bold;
+  min-height: 35px;
+  user-select: none;
+}
+
+.note.ghost {
+  color: rgb(156, 172, 192);
+}
+
+.note.accent {
+  color: rgb(255, 38, 0);
+}
+
+.count {
+  background-color: rgb(83, 93, 113);
+  color: white;
+  box-shadow: none;
+  transform: none !important;
+}
+
+.division {
+  flex: 1;
+}
+
+.division.current {
+  background-color: rgba(255, 0, 0, 0.3);
+}
+
+.player-controls {
+  width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 25px;
+  gap: 15px;
+}
+
+.tempo {
+  width: 50px;
+  text-align: center;
+}
+
+.instrument-picker {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  margin-bottom: 25px;
+  width: 1000px;
+  gap: 10px;
+  text-transform: capitalize;
+}
+
+.instrument-button {
+  border: 1px solid black;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.instrument-button:hover {
+  cursor: pointer;
+  transform: translate(1px, -1px);
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+}
+
+.instrument-button.selected {
+  background-color: rgb(83, 93, 113);
+  color: white;
+}
+
+.dnd-copy {
+  transform: none;
+  opacity: 0.5;
+}
