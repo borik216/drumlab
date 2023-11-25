@@ -28,8 +28,8 @@ async function setupSamples() {
 }
 
 function getPath(sound) {
-    console.log(`/assets/audio/${sound}.wav`)
-    return (`/assets/audio/${sound}.wav`);
+    console.log(`assets/audio/${sound}.wav`)
+    return (`assets/audio/${sound}.wav`);
 }
 
 export function playSample(sound, volume = 1.0) {
