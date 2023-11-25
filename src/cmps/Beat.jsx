@@ -35,7 +35,6 @@ export default function Beat({ beat, currentBeat, intervalTime, isPlaying }) {
 
 
   const className = (isDraggingOver) => {
-    console.log(isDraggingOver)
     return `
       flex
       w-full

@@ -347,8 +347,6 @@ export default function PatternContextProvider({ children }) {
             beat.division = 4
         }
 
-        console.log('br', beat.division)
-
         beat.beatDivisions = createObjectWithArrays(beat.division)
         beat.kicksAt = []
         beat.hhPedalsAt = []
@@ -375,8 +373,6 @@ export default function PatternContextProvider({ children }) {
         changeBeatDivision
     }
 
-    console.log('instruments ', instruments)
-    console.log('beats', beats)
     return (
         <PatternContext.Provider value={context}>
             <DragDropContext onDragEnd={dropPattern}>
