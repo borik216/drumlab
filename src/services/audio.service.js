@@ -1,6 +1,4 @@
 let audioContext = new AudioContext();
-import path from 'path'
-import { defineConfig, loadEnv } from 'vite'
 
 export const samples = {}
 
@@ -30,7 +28,8 @@ async function setupSamples() {
 }
 
 function getPath(sound) {
-    return path.join("public","assets","audio",`${sound}.wav`);
+    console.log(`/public/assets/audio/${sound}.wav`)
+    return (`/public/assets/audio/${sound}.wav`);
 }
 
 export function playSample(sound, volume = 1.0) {
