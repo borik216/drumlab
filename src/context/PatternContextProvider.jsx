@@ -29,6 +29,7 @@ const instrumentWeight = {
 export default function PatternContextProvider({ children }) {
     const [instruments, setInstruments] = useState([{ name: 'snare', index: 0 }])
     const [isKick, setIsKick] = useState(false)
+    const [isHHPedal, setIsHHPedal] = useState(false)
     const [kicksAt, setKicksAt] = useState([])
 
     const [beats, setBeats] = useState([
@@ -42,7 +43,8 @@ export default function PatternContextProvider({ children }) {
                 2: [],
                 3: []
             },
-            kicksAt: [0]
+            kicksAt: [0],
+            hhPedalsAt: [0]
         },
         {
             index: 1,
@@ -54,7 +56,8 @@ export default function PatternContextProvider({ children }) {
                 2: [],
                 3: []
             },
-            kicksAt: []
+            kicksAt: [],
+            hhPedalsAt: [0]
         },
         {
             index: 2,
@@ -66,7 +69,8 @@ export default function PatternContextProvider({ children }) {
                 2: [],
                 3: []
             },
-            kicksAt: []
+            kicksAt: [],
+            hhPedalsAt: [0]
         },
         {
             index: 3,
@@ -78,7 +82,8 @@ export default function PatternContextProvider({ children }) {
                 2: [],
                 3: []
             },
-            kicksAt: []
+            kicksAt: [],
+            hhPedalsAt: [0]
         },
     ])
 
@@ -208,6 +213,19 @@ export default function PatternContextProvider({ children }) {
         setBeats([...newBeats])
     }
 
+    function addHHPedal(beatIndex, pulseIndex) {
+
+        const newBeats = [...beats]
+        const updatedBeat = newBeats.find(b => b.index === beatIndex)
+        if (updatedBeat.hhPedalsAt.includes(pulseIndex)) {
+            updatedBeat.hhPedalsAt = updatedBeat.hhPedalsAt.filter(i => i !== pulseIndex)
+        } else {
+            updatedBeat.hhPedalsAt.push(pulseIndex)
+        }
+
+        setBeats([...newBeats])
+    }
+
 
     function resetPattern() {
         const newBeats = _.cloneDeep(beats)
@@ -275,7 +293,6 @@ export default function PatternContextProvider({ children }) {
     }
 
     function dropNote(result) {
-        console.log(result)
         const { destination, source, draggableId } = result;
 
         if (!destination || source.index === destination.index) {
@@ -304,9 +321,7 @@ export default function PatternContextProvider({ children }) {
         }
         else {
             sourceNote.instrumentIndex = destination.index
-            console.log('drop note instruments', instruments)
             let instrument = instruments.find(i => i.index === destination.index)
-            console.log('drop note instrument', instrument)
             sourceNote.instrument = instrument.name
             console.log(sourceNote)
         }
@@ -314,19 +329,50 @@ export default function PatternContextProvider({ children }) {
         setBeats(updatedBeats)
     }
 
+    function toggleKick() {
+        setIsKick(prev => !prev)
+    }
+
+    function toggleHHPedal() {
+        setIsHHPedal(prev => !prev)
+    }
+
+    function changeBeatDivision(beatIndex) {
+        const newBeats = _.cloneDeep(beats)
+        const beat = newBeats.find(beat => beat.index === beatIndex)
+        if(beat.division === 4){ 
+            beat.division = 3
+        }
+        else if(beat.division === 3) {
+            beat.division = 4
+        }
+
+        console.log('br', beat.division)
+
+        beat.beatDivisions = createObjectWithArrays(beat.division)
+        beat.kicksAt = []
+        beat.hhPedalsAt = []
+
+        setBeats(newBeats)
+    }
 
     const context = {
         isKick,
+        isHHPedal,
         kicksAt,
         instruments,
         beats,
         addKick,
+        addHHPedal,
         handleInstruments,
         toggleNote,
         dropNote,
         generateRandomPattern,
         changeStrokeType,
         resetPattern,
+        toggleKick,
+        toggleHHPedal,
+        changeBeatDivision
     }
 
     console.log('instruments ', instruments)

@@ -1,7 +1,7 @@
 let audioContext = new AudioContext();
 export const samples = {}
 
-const sounds = ["snare", "ride", "kick", "floor tom", "mid tom", "high tom", "hi hat", "open hat" , "crash", "metronome"]
+const sounds = ["snare", "hh pedal", "ride", "kick", "floor tom", "mid tom", "high tom", "hi hat", "open hat" , "crash", "metronome"]
 
 export function createAudioCtx() {
     audioContext = new AudioContext()

@@ -1,7 +1,8 @@
 import BeatDivision from "./BeatDivision";
 import { Droppable } from "@hello-pangea/dnd";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import { playSample } from "../services/audio.service.js"
+import PatternContext from '../context/PatternContext'
 
 export default function Beat({ beat, currentBeat, intervalTime, isPlaying }) {
   const counting = beat.division === 4 ? [beat.index + 1, "e", "+", "a"] : [beat.index + 1, "+", "a"];
@@ -9,10 +10,11 @@ export default function Beat({ beat, currentBeat, intervalTime, isPlaying }) {
   const [currentDivision, setCurrentDivision] = useState(0)
   const intervalIdRef = useRef(null);
   const isCurrentBeat = currentBeat === beat.index
+  const {changeBeatDivision} = useContext(PatternContext)
 
   useEffect(() => {
     if (isCurrentBeat && isPlaying) {
-      playSample('metronome', 1.0);
+      playSample('metronome', 1.5);
       if (!intervalIdRef.current) {
         intervalIdRef.current = setInterval(() => {
           setCurrentDivision(prevDivision => (prevDivision + 1) % beat.division)
@@ -36,7 +38,7 @@ export default function Beat({ beat, currentBeat, intervalTime, isPlaying }) {
     console.log(isDraggingOver)
     return `
       flex
-      w-1/4
+      w-full
       border-l
       border-l-zinc-700
 
@@ -44,6 +46,9 @@ export default function Beat({ beat, currentBeat, intervalTime, isPlaying }) {
     `
   }
   return (
+    <>
+    <div className='flex flex-col w-1/4'>
+    <button className='text-sm h-6 bg-neutral-800 text-white border-r border-l diagonal-fractions hover:bg-neutral-700' onClick={() => changeBeatDivision(beat.index)}>Change to {beat.division === 4 ? '1/3' : '1/4'}</button>
     <Droppable droppableId={`${beat.index}`}>
       {(provided, snapshot) => (
         <div
@@ -57,17 +62,20 @@ export default function Beat({ beat, currentBeat, intervalTime, isPlaying }) {
                 key={count}
                 count={count}
                 divisionIndex={index}
-                beatIndex={beat.index}
                 currentDivision={currentDivision}
                 isCurrentBeat={isCurrentBeat}
                 isPlaying={isPlaying}
+                beatIndex={beat.index}
                 notes={beat.beatDivisions[index]}
                 kicksAt={beat.kicksAt}
+                hhPedalsAt={beat.hhPedalsAt}
               />
             );
           })}
         </div>
       )}
     </Droppable>
+    </div>
+    </>
   );
 }

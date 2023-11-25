@@ -13,7 +13,7 @@ export default function PatternPlayer() {
   const { beats } = useContext(PatternContext)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentBeat, setCurrentBeat] = useState(0)
-  const [tempo, setTempo] = useState(30)
+  const [tempo, setTempo] = useState(60)
   const [intervalId, setIntervalId] = useState(null);
 
   let intervalTime = 60 * 1000 / tempo

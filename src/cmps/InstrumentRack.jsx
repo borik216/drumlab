@@ -2,12 +2,12 @@ import PatternContext from "../context/PatternContext";
 import { useContext } from "react";
 
 export default function IntsrumentRack() {
-    const { instruments, isKick } = useContext(PatternContext);
+    const { instruments, isKick, isHHPedal } = useContext(PatternContext);
 
     const instrumentClass = 'flex justify-center items-center text-xs w-16 h-8 border-b border-zinc-400 bg-zinc-500 text-white'
     return (
         <div className="capitalize">
-            <p className={'h-8 bg-zinc-600'}></p>
+            <p className={'h-8 bg-zinc-600 mt-6'}></p>
             {instruments
                 .sort((a, b) => b.index - a.index)
                 .map((ins) => (
@@ -16,6 +16,7 @@ export default function IntsrumentRack() {
                     </p>
                 ))}
             {isKick && <p className={instrumentClass}>Kick</p>}
+            {isHHPedal && <p className={instrumentClass}>HH Pedal</p>}
         </div>
     );
 }

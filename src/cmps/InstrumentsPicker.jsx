@@ -3,7 +3,7 @@ import { useContext } from "react";
 import Header from './Header'
 
 export default function InstrumentPicker() {
-  const { instruments: pickedInstruments, handleInstruments } =
+  const { instruments: pickedInstruments, handleInstruments, toggleKick, toggleHHPedal, isKick, isHHPedal } =
     useContext(PatternContext);
   let instrumentClass = (isPicked) => {
     return `
@@ -48,8 +48,8 @@ export default function InstrumentPicker() {
 
     <Header text={'Legs'} />
     <div className="flex justify-between flex-wrap mx-auto max-w-xl mb-4 mt-2 gap-px">
-    <span className={instrumentClass(false)}>Kick</span>
-    <span className={instrumentClass(false)}>HH Pedal</span>
+    <span className={instrumentClass(isKick)}  onClick={() => toggleKick()}>Kick</span>
+    <span className={instrumentClass(isHHPedal)} onClick={() => toggleHHPedal()}>HH Pedal</span>
       
       
     </div>
