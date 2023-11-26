@@ -119,13 +119,12 @@ export default function PatternContextProvider({ children }) {
             currentBeat.beatDivisions[index].push({ ...note })
         })
 
-        setBeats(currentBeats)
-        getStrokeTypes()
+        let newBeats = getStrokeTypes(currentBeats)
+        setBeats(newBeats)
     }
 
 
     const toggleNote = (noteLocation) => {
-        console.log(noteLocation)
         // Copy the beats array to avoid modifying the state directly
         let updatedBeats = [...beats];
 
@@ -167,9 +166,10 @@ export default function PatternContextProvider({ children }) {
             }
         }
 
+        const newBeats = getStrokeTypes(updatedBeats)
         // Update the modified beats array in the state
         setBeats(updatedBeats);
-        getStrokeTypes()
+        
     };
 
 
@@ -198,9 +198,9 @@ export default function PatternContextProvider({ children }) {
         } else {
             return;
         }
-
-        setBeats(updatedBeats);
-        getStrokeTypes()
+        const newBeats = getStrokeTypes(updatedBeats)
+        setBeats(newBeats);
+        
     }
 
 
@@ -239,6 +239,7 @@ export default function PatternContextProvider({ children }) {
                 beat.beatDivisions[i] = createObjectWithArrays(beat.division)
             }
             beat.kicksAt = []
+            beat.hhPedalsAt = []
         })
 
         setBeats(newBeats)
@@ -247,7 +248,7 @@ export default function PatternContextProvider({ children }) {
 
     function generateRandomPattern() {
 
-        const newBeats = _.cloneDeep(beats)
+        let newBeats = _.cloneDeep(beats)
 
         for (let i = 0; i < 4; i++) {
             let currentBeat = newBeats[i]
@@ -273,8 +274,9 @@ export default function PatternContextProvider({ children }) {
             }
         }
 
+        newBeats = getStrokeTypes(newBeats)
         setBeats(newBeats)
-        getStrokeTypes()
+        // getStrokeTypes()
     }
 
     function handleInstruments(instrument) {
@@ -360,12 +362,11 @@ export default function PatternContextProvider({ children }) {
     }
 
     function toggleStrokeTypes() {
-        getStrokeTypes()
         setStrokesRevealed(prev => !prev)
     }
 
-    function getStrokeTypes() {
-        const newBeats = _.cloneDeep(beats)
+    function getStrokeTypes(beats) {
+        let newBeats = _.cloneDeep(beats)
 
         let allNotes = []
 
@@ -398,7 +399,7 @@ export default function PatternContextProvider({ children }) {
             }
         })
 
-        setBeats(newBeats)
+        return newBeats
     }
 
     const context = {
