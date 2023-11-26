@@ -28,6 +28,8 @@ const instrumentWeight = {
 
 export default function PatternContextProvider({ children }) {
     const [instruments, setInstruments] = useState([{ name: 'snare', index: 0 }])
+    const [areStrokesRevealed, setStrokesRevealed] = useState(false)
+
     const [isKick, setIsKick] = useState(false)
     const [isHHPedal, setIsHHPedal] = useState(false)
     const [kicksAt, setKicksAt] = useState([])
@@ -38,7 +40,7 @@ export default function PatternContextProvider({ children }) {
             division: 4,
             beatDivisions:
             {
-                0: [{ hand: 'R', instrument: 'snare', instrumentIndex: 0, type: 'accent' }],
+                0: [],
                 1: [],
                 2: [],
                 3: []
@@ -354,6 +356,48 @@ export default function PatternContextProvider({ children }) {
         setBeats(newBeats)
     }
 
+    function toggleStrokeTypes() {
+        getStrokeTypes()
+        setStrokesRevealed(prev => !prev)
+    }
+
+    function getStrokeTypes() {
+        const newBeats = _.cloneDeep(beats)
+
+        let allNotes = []
+
+        for (const beat of newBeats) {
+            for (const divIndex in beat.beatDivisions) {
+                allNotes = allNotes.concat(beat.beatDivisions[divIndex])
+            }
+        }
+
+        allNotes.forEach((note, index) => {
+            let currentNote = note
+
+            let startFrom = index + 1
+            let nextNote = allNotes.slice(startFrom).find(note => note.hand === currentNote.hand)
+            if(!nextNote) {
+                nextNote = allNotes.find(note => {
+                    return note.hand === currentNote.hand
+                })
+            }
+
+
+            if(currentNote.type === "accent" && nextNote.type === "accent") {
+                currentNote.stroke = 'full'
+            } else if (currentNote.type === "accent" && nextNote.type === "ghost") {
+                currentNote.stroke = 'down'
+            } else if (currentNote.type === "ghost" && nextNote.type === "ghost") {
+                currentNote.stroke = 'tap'
+            } else if (currentNote.type === "ghost" && nextNote.type === "accent") {
+                currentNote.stroke = 'up'
+            }
+        })
+
+        setBeats(newBeats)
+    }
+
     const context = {
         isKick,
         isHHPedal,
@@ -370,7 +414,10 @@ export default function PatternContextProvider({ children }) {
         resetPattern,
         toggleKick,
         toggleHHPedal,
-        changeBeatDivision
+        changeBeatDivision,
+        getStrokeTypes,
+        areStrokesRevealed,
+        toggleStrokeTypes
     }
 
     return (

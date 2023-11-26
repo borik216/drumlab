@@ -1,22 +1,22 @@
 import { useState, useEffect } from "react";
 
 const Random = () => {
-    const [strokeColor, setStrokeColor] = useState('blue');
+    // const [strokeColor, setStrokeColor] = useState('blue');
 
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            const newColor = getRandomColor();
-            setStrokeColor(newColor);
-        }, 5000); // Change color every 1000 milliseconds (1 second)
+    // useEffect(() => {
+    //     const intervalId = setInterval(() => {
+    //         const newColor = getRandomColor();
+    //         setStrokeColor(newColor);
+    //     }, 5000); // Change color every 1000 milliseconds (1 second)
 
-        return () => {
-            clearInterval(intervalId);
-        };
-    }, []); // Empty dependency array ensures the effect runs only once on component mount
+    //     return () => {
+    //         clearInterval(intervalId);
+    //     };
+    // }, []); // Empty dependency array ensures the effect runs only once on component mount
 
-    const getRandomColor = () => {
-        return '#' + Math.floor(Math.random() * 16777215).toString(16);
-    };
+    // const getRandomColor = () => {
+    //     return '#' + Math.floor(Math.random() * 16777215).toString(16);
+    // };
 
 
     return (
@@ -28,8 +28,8 @@ const Random = () => {
             width="50px"
             height="50px"
             class="w-14 h-14 hover:cursor-pointer stroke-1"
-            stroke={strokeColor}
-            fill={strokeColor}
+            // stroke={strokeColor}
+            // fill={strokeColor}
             style={{ transition: 'stroke 1s ease-in-out' }}
         >
             <g

@@ -1,32 +1,30 @@
 import { Draggable, Droppable } from "@hello-pangea/dnd";
 import { useContext, useEffect } from "react";
 import PatternContext from "../context/PatternContext";
+import StrokeType from "./StrokeType"
 
 export default function Note({ note, noteLocation }) {
-  // let className = note && `note ${note.type === "ghost" ? "ghost" : "accent"}`;
-  const { changeStrokeType, toggleNote } = useContext(PatternContext);
+  const { changeStrokeType, toggleNote, areStrokesRevealed } = useContext(PatternContext);
   const draggableId = Object.values(noteLocation).join("-");
 
-  useEffect(() => {
-    if (noteLocation.beatIndex === 0 && noteLocation.beatDivisionIndex === 0)
-      console.log(noteLocation)
-  }, [noteLocation])
-
-  const baseClasses = 'h-8 text-center border-r border-b border-r-zinc-400 border-b-zinc-400 w-full flex justify-center items-center hover:cursor-pointer hover:bg-zinc-100 font-semibold'
+  const baseClasses = 'h-8 w-8 text-center border-r border-b border-r-zinc-400 border-b-zinc-400 flex justify-evenly items-center hover:cursor-pointer hover:bg-zinc-100 font-semibold'
 
 
-  let className = (note) => {
+  let noteClasses = (note) => {
 
     if (!note) return baseClasses
     return `
       ${baseClasses}
-      ${note.type === 'accent' ? 'text-accent-red' : 'text-ghost-blue'}
+      
+      ${note.type === 'accent' ? 'text-accent-red' : 'text-ghost-blue '}
+      
     `
   }
 
   let draggedNoteClasses = (isDragging) => {
     if (isDragging) {
       return `
+      w-1/2
       ${baseClasses}
       ${' outline outline-2 outline-yellow-500'}
     `
@@ -40,7 +38,7 @@ export default function Note({ note, noteLocation }) {
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={className(note)}
+            className={noteClasses(note)}
             onClick={() => toggleNote(noteLocation)}
             onContextMenu={(e) => changeStrokeType(e, noteLocation)}
           >
@@ -65,6 +63,7 @@ export default function Note({ note, noteLocation }) {
                 )}
               </Draggable>
             }
+            {note && areStrokesRevealed && <StrokeType stroke={note.stroke}/>}
           </div>
         )
       }
