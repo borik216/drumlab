@@ -199,6 +199,7 @@ export default function PatternContextProvider({ children }) {
         }
 
         setBeats(updatedBeats);
+        getStrokeTypes()
     }
 
 

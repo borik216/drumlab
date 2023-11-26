@@ -68,6 +68,7 @@ export default function Beat({ beat, currentBeat, intervalTime, isPlaying }) {
                 notes={beat.beatDivisions[index]}
                 kicksAt={beat.kicksAt}
                 hhPedalsAt={beat.hhPedalsAt}
+                division={beat.division}
               />
             );
           })}

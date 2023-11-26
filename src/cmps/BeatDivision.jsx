@@ -17,6 +17,7 @@ export default function BeatDivision({
   isCurrentBeat,
   isPlaying,
   beatIndex,
+  division
 }) {
   const { instruments, isKick, isHHPedal, dropNote, beats } = useContext(PatternContext);
   const { playSound } = useContext(PlayerContext);
@@ -38,8 +39,7 @@ export default function BeatDivision({
     return `
       flex
       flex-col
-      grow
-
+      ${division === 3 ? 'w-1/3' : 'w-1/4'}
       ${isCurrentDivision ? 'bg-lime-400/50' : ''}
     `
   }

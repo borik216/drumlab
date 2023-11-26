@@ -7,7 +7,7 @@ export default function Note({ note, noteLocation }) {
   const { changeStrokeType, toggleNote, areStrokesRevealed } = useContext(PatternContext);
   const draggableId = Object.values(noteLocation).join("-");
 
-  const baseClasses = 'h-8 w-8 text-center border-r border-b border-r-zinc-400 border-b-zinc-400 flex justify-evenly items-center hover:cursor-pointer hover:bg-zinc-100 font-semibold'
+  const baseClasses = 'h-8 w-full text-center border-r border-b border-r-zinc-400 border-b-zinc-400 flex justify-evenly items-center hover:cursor-pointer hover:bg-zinc-100 font-semibold'
 
 
   let noteClasses = (note) => {
