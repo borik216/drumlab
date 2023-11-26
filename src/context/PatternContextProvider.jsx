@@ -89,9 +89,7 @@ export default function PatternContextProvider({ children }) {
         },
     ])
 
-    useEffect(() => {
-        getStrokeTypes()
-    }, [beats])
+    
 
     const dropPattern = (result) => {
         const { destination, source, draggableId } = result;
@@ -121,9 +119,8 @@ export default function PatternContextProvider({ children }) {
             currentBeat.beatDivisions[index].push({ ...note })
         })
 
-        console.log(currentBeats)
-
         setBeats(currentBeats)
+        getStrokeTypes()
     }
 
 
@@ -172,6 +169,7 @@ export default function PatternContextProvider({ children }) {
 
         // Update the modified beats array in the state
         setBeats(updatedBeats);
+        getStrokeTypes()
     };
 
 
@@ -276,6 +274,7 @@ export default function PatternContextProvider({ children }) {
         }
 
         setBeats(newBeats)
+        getStrokeTypes()
     }
 
     function handleInstruments(instrument) {
