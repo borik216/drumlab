@@ -1,6 +1,6 @@
 import PatternContext from "./PatternContext";
 import { DragDropContext } from '@hello-pangea/dnd'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import stickingPatterns from '../data/sticking-patterns'
 import _ from 'lodash';
 
@@ -89,6 +89,9 @@ export default function PatternContextProvider({ children }) {
         },
     ])
 
+    useEffect(() => {
+        getStrokeTypes()
+    }, [beats])
 
     const dropPattern = (result) => {
         const { destination, source, draggableId } = result;
