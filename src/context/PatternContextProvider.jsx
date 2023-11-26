@@ -168,7 +168,7 @@ export default function PatternContextProvider({ children }) {
 
         const newBeats = getStrokeTypes(updatedBeats)
         // Update the modified beats array in the state
-        setBeats(updatedBeats);
+        setBeats(newBeats);
         
     };
 
