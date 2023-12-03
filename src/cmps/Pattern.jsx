@@ -1,38 +1,36 @@
+import PatternContext from '../context/PatternContext'
+import PatternContextProvider from "../context/PatternContextProvider.jsx";
+import InstrumentRack from "./InstrumentRack";
+import Beat from "./Beat";
+import {useContext, useState, useEffect} from 'react'
+import { useSelector, useDispatch } from "react-redux";
 
-import { Draggable } from '@hello-pangea/dnd'
+export default function Pattern({index}) {
+  
+  const pattern = useSelector(state => state.player.patterns[index])
 
 
-export default function Pattern({ pattern, index }) {
+    
+  return (
+    <PatternContextProvider index={index}>
+      {/* <InstrumentPicker /> */}
+      <div className="flex max-w-3xl mx-auto mt-6">
+        <InstrumentRack />
+        <Measure/>
+      </div>
+    </PatternContextProvider>
+  );
+}
 
-    let className = (isDragging) => {
-        return `
-                text-black 
-                rounded-sm 
-                w-16 
-                m-1 
-                text-center 
-                border
-                hover:bg-gray-300
-                ${isDragging ? 'border-dotted' : 'border-solid'}
-                ${isDragging ? 'border-rose-700' : ''}
-                ${isDragging ? 'bg-gray-200' : 'bg-gray-100'}
-                ${isDragging ? 'border-2' : 'border'}
-                `
-    }
+
+function Measure() {
+    const {pattern} = useContext(PatternContext)
+
     return (
-        <Draggable draggableId={pattern.id} index={index}>
-            {(provided, snapshot) => {
-                return (
-                    <span
-                        className={className(snapshot.isDragging)}
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                    >{pattern.display}
-                    </span>
-                )
-            }
-            }
-        </Draggable>
+        <>
+        {pattern.beats.map((beat) => (
+            <Beat beat={beat}/>
+        ))}
+        </>
     )
 }

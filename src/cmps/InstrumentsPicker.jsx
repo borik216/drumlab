@@ -31,28 +31,28 @@ export default function InstrumentPicker() {
   const instruments = ["snare", "ride", "floor tom", "mid tom", "high tom", "hi hat", "open hat", "crash"];
   return (
     <>
-    <Header text={'Hand Instruments'}/>
-    <div className="flex justify-between flex-wrap mx-auto max-w-xl mb-4 mt-2 gap-px">
-      {instruments.map((instrument) => {
-        var isPicked = pickedInstruments.find(i => i.name === instrument)
-        return (
-          <span
-            className={instrumentClass(isPicked)}
-            onClick={() => handleInstruments(instrument)}
-          >
-            {instrument}
-          </span>
-        );
-      })}
-    </div>
+      <Header text={'Hand Instruments'} />
+      <div className="flex justify-between flex-wrap mx-auto max-w-3xl mb-4 mt-2 gap-px">
+        {instruments.map((instrument) => {
+          var isPicked = pickedInstruments.find(i => i.name === instrument)
+          return (
+            <span
+              className={instrumentClass(isPicked)}
+              onClick={() => handleInstruments(instrument)}
+            >
+              {instrument}
+            </span>
+          );
+        })}
+      </div>
 
-    <Header text={'Legs'} />
-    <div className="flex justify-between flex-wrap mx-auto max-w-xl mb-4 mt-2 gap-px">
-    <span className={instrumentClass(isKick)}  onClick={() => toggleKick()}>Kick</span>
-    <span className={instrumentClass(isHHPedal)} onClick={() => toggleHHPedal()}>HH Pedal</span>
-      
-      
-    </div>
+      <Header text={'Legs'} />
+      <div className="flex justify-between flex-wrap mx-auto max-w-3xl mb-4 mt-2 gap-px">
+        <span className={instrumentClass(isKick)} onClick={() => toggleKick()}>Kick</span>
+        <span className={instrumentClass(isHHPedal)} onClick={() => toggleHHPedal()}>HH Pedal</span>
+
+
+      </div>
     </>
   );
 }

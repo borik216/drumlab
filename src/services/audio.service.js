@@ -23,16 +23,14 @@ async function setupSamples() {
         const sample = await getFile(path)
         samples[sound] = sample
     }
-    console.log(samples)
-    console.log("Setting up done")
 }
 
 function getPath(sound) {
-    console.log(`/audio/${sound}.wav`)
     return (`/audio/${sound}.wav`);
 }
 
 export function playSample(sound, volume = 1.0) {
+    console.log('twice?')
     const sampleSource = audioContext.createBufferSource()
     const gainNode = audioContext.createGain();
     sampleSource.buffer = samples[sound]

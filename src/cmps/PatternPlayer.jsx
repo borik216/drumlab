@@ -1,70 +1,64 @@
-import InstrumentRack from "./InstrumentRack";
-import Beat from "./Beat";
-import PlayerControls from "./PlayerControls"
-import InstrumentPicker from "./InstrumentsPicker.jsx";
-import { useContext, useState, useEffect } from "react";
-import PatternContext from '../context/PatternContext'
-import PlayerContextProvider from "../context/PlayerContextProvider.jsx";
-import { createAudioCtx } from "../services/audio.service.js"
-const beatsPerMeasure = 4;
+import PlayerControls from "./PlayerControls";
+import { useContext, useState, useEffect, useRef } from "react";
+import { createAudioCtx } from "../services/audio.service.js";
+import Pattern from "./Pattern";
+import { useSelector, useDispatch } from "react-redux";
+import { advanceLocation } from "../slices/player.slice.js";
 
 export default function PatternPlayer() {
+  const tempo = useSelector((state) => state.player.tempo);
+  const isPlaying = useSelector((state) => state.player.isPlaying);
+  const intervalTime = useSelector((state) => state.player.intervalTime);
+  const patterns = useSelector((state) => state.player.patterns);
+  const dispatch = useDispatch();
 
-  const { beats } = useContext(PatternContext)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentBeat, setCurrentBeat] = useState(0)
-  const [tempo, setTempo] = useState(60)
+  
+
   const [intervalId, setIntervalId] = useState(null);
-
-  let intervalTime = 60 * 1000 / tempo
+  // const [current, setCurrent] = useState({ atPattern: 0, atBeat: 0 });
+  const totalBeatsPlayed = useRef(0);
 
   useEffect(() => {
-    createAudioCtx()
+    createAudioCtx();
     return () => {
-      clearInterval(intervalId)
-      setIntervalId(null)
-    }
-  }, [])
+      clearInterval(intervalId);
+      setIntervalId(null);
+    };
+  }, []);
+
 
   function play() {
-    if (!isPlaying) {
-      setIsPlaying(true)
-      if (!intervalId) {
-        const newIntervalId = setInterval(() => {
-          setCurrentBeat(prevBeat => (prevBeat + 1) % beatsPerMeasure);
-        }, intervalTime);
-        setIntervalId(newIntervalId);
-      }
+    console.log('uhmmm')
+    dispatch({type:'player/play', payload: true})
+    if (!intervalId) {
+      const newIntervalId = setInterval(() => {
+        dispatch(advanceLocation())
+      }, intervalTime);
+      setIntervalId(newIntervalId);
     }
   }
 
   function stop() {
-    if (isPlaying) {
-      setIsPlaying(false)
-      clearInterval(intervalId)
-      setIntervalId(null)
-      setCurrentBeat(0)
-    }
-  }
-
-  function changeTempo({ target }) {
-    let tempo = target.value
-    if (tempo < 20 || tempo > 180) return
-    setTempo(tempo)
+      dispatch({type: 'player/stop'})
+      clearInterval(intervalId);
+      setIntervalId(null);  
   }
 
   return (
-    <PlayerContextProvider>
-      <div className="pattern-player">
-        <InstrumentPicker />
-        <div className="flex max-w-xl mx-auto">
-          <InstrumentRack />
-          {
-            beats.map((beat) => <Beat beat={beat} currentBeat={currentBeat} intervalTime={intervalTime} isPlaying={isPlaying} />)
-          }
-        </div>
-      </div>
-      <PlayerControls play={play} stop={stop} isPlaying={isPlaying} changeTempo={changeTempo} tempo={tempo} />
-    </PlayerContextProvider>
+    <>
+      {patterns.map((pattern, index) => (
+        <Pattern
+          index={index}
+          key={index}
+        />
+      ))}
+
+      <PlayerControls
+        play={play}
+        stop={stop}
+        isPlaying={isPlaying}
+        tempo={tempo}
+      />
+    </>
   );
 }

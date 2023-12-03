@@ -2,11 +2,11 @@ import PatternContext from "./PatternContext";
 import { DragDropContext } from '@hello-pangea/dnd'
 import { useState, useEffect } from 'react'
 import stickingPatterns from '../data/sticking-patterns'
+import { useSelector, useDispatch } from "react-redux";
 import _ from 'lodash';
 
 function createObjectWithArrays(integer) {
     let result = {};
-
     for (let i = 0; i < integer; i++) {
         result[i] = [];
     }
@@ -26,70 +26,18 @@ const instrumentWeight = {
 }
 
 
-export default function PatternContextProvider({ children }) {
-    const [instruments, setInstruments] = useState([{ name: 'snare', index: 0 }])
+export default function PatternContextProvider({ index, children }) {
+    const patternIndex = index
+    const dispatch = useDispatch()
+    let pattern = useSelector(state => state.player.patterns[index])
     const [areStrokesRevealed, setStrokesRevealed] = useState(false)
-
-    const [isKick, setIsKick] = useState(false)
-    const [isHHPedal, setIsHHPedal] = useState(false)
-    const [kicksAt, setKicksAt] = useState([])
-
-    const [beats, setBeats] = useState([
-        {
-            index: 0,
-            division: 4,
-            beatDivisions:
-            {
-                0: [],
-                1: [],
-                2: [],
-                3: []
-            },
-            kicksAt: [0],
-            hhPedalsAt: [0]
-        },
-        {
-            index: 1,
-            division: 4,
-            beatDivisions:
-            {
-                0: [],
-                1: [],
-                2: [],
-                3: []
-            },
-            kicksAt: [],
-            hhPedalsAt: [0]
-        },
-        {
-            index: 2,
-            division: 4,
-            beatDivisions:
-            {
-                0: [],
-                1: [],
-                2: [],
-                3: []
-            },
-            kicksAt: [],
-            hhPedalsAt: [0]
-        },
-        {
-            index: 3,
-            division: 4,
-            beatDivisions:
-            {
-                0: [],
-                1: [],
-                2: [],
-                3: []
-            },
-            kicksAt: [],
-            hhPedalsAt: [0]
-        },
-    ])
+    const [beats, setBeats] = useState([])
 
     
+    function updateState(pattern) {
+        let newPattern = getStrokeTypes(pattern)
+        dispatch({type: 'player/editPatterns', payload: {index: patternIndex, pattern: newPattern}})
+    }
 
     const dropPattern = (result) => {
         const { destination, source, draggableId } = result;
@@ -102,7 +50,7 @@ export default function PatternContextProvider({ children }) {
             return;
         }
 
-        const currentBeats = [...beats]
+        const currentPattern = _.cloneDeep(pattern)
 
         // get pattern with matching id to the one being dragged
         let stickingPattern = stickingPatterns.find(pattern => pattern.id === draggableId)
@@ -110,7 +58,7 @@ export default function PatternContextProvider({ children }) {
         // get the beat position
         const index = destination.droppableId
 
-        const currentBeat = currentBeats.find(beat => +beat.index === +index)
+        const currentBeat = currentPattern.beats.find(beat => +beat.index === +index)
 
         if (currentBeat.division !== stickingPattern.sticking.length) return
         currentBeat.beatDivisions = createObjectWithArrays(currentBeat.division)
@@ -119,21 +67,20 @@ export default function PatternContextProvider({ children }) {
             currentBeat.beatDivisions[index].push({ ...note })
         })
 
-        let newBeats = getStrokeTypes(currentBeats)
-        setBeats(newBeats)
+        updateState(currentPattern)
     }
 
 
     const toggleNote = (noteLocation) => {
         // Copy the beats array to avoid modifying the state directly
-        let updatedBeats = [...beats];
+        let updatedPattern = _.cloneDeep(pattern);
 
         // Find the beat and divisionNotes based on the noteLocation
-        let atBeat = updatedBeats.find(beat => beat.index === noteLocation.beatIndex);
+        let atBeat = updatedPattern.beats.find(beat => beat.index === noteLocation.beatIndex);
         let divisionNotes = atBeat.beatDivisions[noteLocation.divisionIndex];
-
         // Find the index of the note in the divisionNotes based on the instrumentIndex
         let noteIndex = divisionNotes.findIndex(note => note.instrumentIndex === noteLocation.instrumentIndex);
+
 
         // Check if there's an 'R' hand note in divisionNotes
         let hasRHand = divisionNotes.some(note => note.hand === 'R');
@@ -166,10 +113,8 @@ export default function PatternContextProvider({ children }) {
             }
         }
 
-        const newBeats = getStrokeTypes(updatedBeats)
-        // Update the modified beats array in the state
-        setBeats(newBeats);
-        
+
+        updateState(updatedPattern)
     };
 
 
@@ -178,10 +123,10 @@ export default function PatternContextProvider({ children }) {
         event.preventDefault()
 
         // Copy the beats array to avoid modifying the state directly
-        let updatedBeats = [...beats];
+        let updatedPattern = _.cloneDeep(pattern);
 
         // Find the beat and divisionNotes based on the noteLocation
-        let atBeat = updatedBeats.find(beat => beat.index === noteLocation.beatIndex);
+        let atBeat = updatedPattern.beats.find(beat => beat.index === noteLocation.beatIndex);
         let divisionNotes = atBeat.beatDivisions[noteLocation.divisionIndex];
 
         // Find the index of the note in the divisionNotes based on the instrumentIndex
@@ -198,43 +143,42 @@ export default function PatternContextProvider({ children }) {
         } else {
             return;
         }
-        const newBeats = getStrokeTypes(updatedBeats)
-        setBeats(newBeats);
-        
+
+        updateState(updatedPattern)
     }
 
 
     function addKick(beatIndex, pulseIndex) {
 
-        const newBeats = [...beats]
-        const updatedBeat = newBeats.find(b => b.index === beatIndex)
+        const newPattern = _.cloneDeep(pattern)
+        const updatedBeat = newPattern.beats.find(b => b.index === beatIndex)
         if (updatedBeat.kicksAt.includes(pulseIndex)) {
             updatedBeat.kicksAt = updatedBeat.kicksAt.filter(i => i !== pulseIndex)
         } else {
             updatedBeat.kicksAt.push(pulseIndex)
         }
 
-        setBeats([...newBeats])
+        updateState(newPattern)
     }
 
     function addHHPedal(beatIndex, pulseIndex) {
 
-        const newBeats = [...beats]
-        const updatedBeat = newBeats.find(b => b.index === beatIndex)
+        const newPattern = _.cloneDeep(pattern)
+        const updatedBeat = newPattern.beats.find(b => b.index === beatIndex)
         if (updatedBeat.hhPedalsAt.includes(pulseIndex)) {
             updatedBeat.hhPedalsAt = updatedBeat.hhPedalsAt.filter(i => i !== pulseIndex)
         } else {
             updatedBeat.hhPedalsAt.push(pulseIndex)
         }
 
-        setBeats([...newBeats])
+        updateState(newPattern)
     }
 
 
     function resetPattern() {
-        const newBeats = _.cloneDeep(beats)
+        const updatedPattern = _.cloneDeep(pattern)
 
-        newBeats.forEach(beat => {
+        updatedPattern.beats.forEach(beat => {
             for (let i = 0; i < beat.division; i++) {
                 beat.beatDivisions[i] = createObjectWithArrays(beat.division)
             }
@@ -242,16 +186,16 @@ export default function PatternContextProvider({ children }) {
             beat.hhPedalsAt = []
         })
 
-        setBeats(newBeats)
+        updateState(updatedPattern)
     }
 
 
     function generateRandomPattern() {
 
-        let newBeats = _.cloneDeep(beats)
+        let updatedPattern = _.cloneDeep(pattern)
 
-        for (let i = 0; i < 4; i++) {
-            let currentBeat = newBeats[i]
+        for (let i = 0; i < beatsPerMeasure; i++) {
+            let currentBeat = updatedPattern.beats[i]
             let currentBeatDivision = currentBeat.division
 
             for (let j = 0; j < currentBeatDivision; j++) {
@@ -274,11 +218,10 @@ export default function PatternContextProvider({ children }) {
             }
         }
 
-        newBeats = getStrokeTypes(newBeats)
-        setBeats(newBeats)
-        // getStrokeTypes()
+        updateState(updatedPattern)
     }
 
+    // save for l8r
     function handleInstruments(instrument) {
         const doesInstrumentExist = instruments.find(i => i.name === instrument);
 
@@ -312,8 +255,8 @@ export default function PatternContextProvider({ children }) {
         const beatDivisionIndex = +noteData[2]
         const instrumentIndex = +noteData[3]
 
-        const updatedBeats = [...beats]
-        const beat = updatedBeats.find(beat => beat.index === beatIndex)
+        const updatedPattern = _.cloneDeep(pattern)
+        const beat = updatedPattern.beats.find(beat => beat.index === beatIndex)
         const divisionNotes = beat.beatDivisions[beatDivisionIndex]
         const sourceNote = divisionNotes.find(note => note.instrumentIndex === instrumentIndex)
         const destinationNote = divisionNotes.find(note => note.instrumentIndex === +destination.index)
@@ -333,44 +276,35 @@ export default function PatternContextProvider({ children }) {
             console.log(sourceNote)
         }
 
-        setBeats(updatedBeats)
+        
+        updateState(updatedArray)
     }
 
-    function toggleKick() {
-        setIsKick(prev => !prev)
-    }
 
-    function toggleHHPedal() {
-        setIsHHPedal(prev => !prev)
-    }
 
-    function changeBeatDivision(beatIndex) {
-        const newBeats = _.cloneDeep(beats)
-        const beat = newBeats.find(beat => beat.index === beatIndex)
-        if(beat.division === 4){ 
-            beat.division = 3
-        }
-        else if(beat.division === 3) {
-            beat.division = 4
-        }
+    function changeBeatDivision(beatIndex, division) {
+        let newPattern = _.cloneDeep(pattern)
+        const beat = newPattern.beats.find(beat => beat.index === beatIndex)
+
+        beat.division = division
 
         beat.beatDivisions = createObjectWithArrays(beat.division)
         beat.kicksAt = []
         beat.hhPedalsAt = []
 
-        setBeats(newBeats)
+        updateState(newPattern)
     }
 
     function toggleStrokeTypes() {
         setStrokesRevealed(prev => !prev)
     }
 
-    function getStrokeTypes(beats) {
-        let newBeats = _.cloneDeep(beats)
+    function getStrokeTypes(pattern) {
+        let newPattern = _.cloneDeep(pattern)
 
         let allNotes = []
 
-        for (const beat of newBeats) {
+        for (const beat of newPattern.beats) {
             for (const divIndex in beat.beatDivisions) {
                 allNotes = allNotes.concat(beat.beatDivisions[divIndex])
             }
@@ -381,14 +315,14 @@ export default function PatternContextProvider({ children }) {
 
             let startFrom = index + 1
             let nextNote = allNotes.slice(startFrom).find(note => note.hand === currentNote.hand)
-            if(!nextNote) {
+            if (!nextNote) {
                 nextNote = allNotes.find(note => {
                     return note.hand === currentNote.hand
                 })
             }
 
 
-            if(currentNote.type === "accent" && nextNote.type === "accent") {
+            if (currentNote.type === "accent" && nextNote.type === "accent") {
                 currentNote.stroke = 'full'
             } else if (currentNote.type === "accent" && nextNote.type === "ghost") {
                 currentNote.stroke = 'down'
@@ -399,15 +333,55 @@ export default function PatternContextProvider({ children }) {
             }
         })
 
-        return newBeats
+        return newPattern
     }
 
+    function addBeat(atIndex) {
+        if(pattern.beats.length >= 5) return
+        let newBeat = {
+            division: 4,
+            beatDivisions: {
+              0: [],
+              1: [],
+              2: [],
+              3: []
+            },
+            kicksAt: [],
+            hhPedalsAt: []
+          };
+
+        let oldPattern = _.cloneDeep(pattern)
+        
+        let updatedPattern =
+          {
+            ...oldPattern,
+            beats: [
+                ...oldPattern.beats.slice(0, atIndex),
+                newBeat,
+                ...oldPattern.beats.slice(atIndex)
+              ]
+          }
+        
+      
+        updatedPattern.beats = updatedPattern.beats.map((beat, i) => ({ ...beat, index: i }))
+      
+    
+        updateState(updatedPattern)
+      }
+
+      function removeBeat(atIndex) {
+        if(pattern.beats.length <= 2) return
+        let updatedPattern = _.cloneDeep(pattern)
+
+        updatedPattern.beats = updatedPattern.beats.filter(beat => beat.index !== atIndex)
+        updatedPattern.beats = updatedPattern.beats.map((beat, i) => ({...beat, index: i}))
+        
+        updateState(updatedPattern)
+      }
+
+
     const context = {
-        isKick,
-        isHHPedal,
-        kicksAt,
-        instruments,
-        beats,
+        areStrokesRevealed,
         addKick,
         addHHPedal,
         handleInstruments,
@@ -416,12 +390,13 @@ export default function PatternContextProvider({ children }) {
         generateRandomPattern,
         changeStrokeType,
         resetPattern,
-        toggleKick,
-        toggleHHPedal,
         changeBeatDivision,
         getStrokeTypes,
-        areStrokesRevealed,
-        toggleStrokeTypes
+        toggleStrokeTypes,
+        addBeat,
+        removeBeat,
+        pattern,
+        patternIndex
     }
 
     return (

@@ -2,53 +2,62 @@ import { DragDropContext } from "@hello-pangea/dnd";
 import { Droppable } from "@hello-pangea/dnd";
 import { useContext, useEffect } from "react";
 import PatternContext from "../context/PatternContext";
-import PlayerContext from "../context/PlayerContext";
 import Note from "./Note";
 import KickNote from "./KickNote";
 import HHPedalNote from './HHPedalNote'
+import RowItem from '../layout/RowItem'
+import ColItem from '../layout/ColItem'
+import {playSample} from '../services/audio.service.js'
+import { useSelector, useDispatch } from "react-redux";
 
 export default function BeatDivision({
   count,
-  notes,
-  kicksAt,
-  hhPedalsAt,
   divisionIndex,
   currentDivision,
   isCurrentBeat,
-  isPlaying,
-  beatIndex,
-  division
+  beat
 }) {
-  const { instruments, isKick, isHHPedal, dropNote, beats } = useContext(PatternContext);
-  const { playSound } = useContext(PlayerContext);
-  const isCurrentDivision =
-    isPlaying && isCurrentBeat && currentDivision === divisionIndex;
+  const {index: beatIndex, kicksAt, hhPedalsAt, division} = beat
+  const notes = beat.beatDivisions[divisionIndex]
+  const {isPlaying, isKick, isHHPedal, instruments, currentLocation} = useSelector(state => state.player)
+  const { dropNote, patternIndex } = useContext(PatternContext);
+  
+  const isCurrentDivision = (
+    isPlaying && 
+    beat.index === currentLocation.atBeat && 
+    patternIndex === currentLocation.atPattern &&
+    currentDivision === divisionIndex
+  )
+
   const hasKick = kicksAt.includes(divisionIndex);
   const hasHHPedal = hhPedalsAt.includes(divisionIndex)
 
   if (isCurrentDivision) {
     notes.forEach((note) => {
       const noteVolume = note.type === "accent" ? 1 : 0.2;
-      playSound(note.instrument, noteVolume);
+      playSample(note.instrument, noteVolume);
     });
-    if (hasKick && isKick) playSound("kick", 0.8);
-    if (hasHHPedal && isHHPedal) playSound("hh pedal", 0.5)
+    if (hasKick && isKick) playSample("kick", 0.8);
+    if (hasHHPedal && isHHPedal) playSample("hh pedal", 0.5)
   }
 
   const className = (isCurrentDivision) => {
     return `
+      flex-1
       flex
       flex-col
-      ${division === 3 ? 'w-1/3' : 'w-1/4'}
       ${isCurrentDivision ? 'bg-lime-400/50' : ''}
     `
   }
 
-  const countNoteClass = `flex justify-center items-center w-full h-8 text-center bg-dm-blue  ${isCurrentDivision ? 'text-lime-400' : 'text-white'}`
+
+  const countNoteClass = `h-full flex justify-center items-center text-center bg-dm-blue  ${isCurrentDivision ? 'text-lime-400' : 'text-white'}`
   return (
     <DragDropContext onDragEnd={dropNote}>
       <div className={className(isCurrentDivision)}>
-        <p className={countNoteClass}><span>{count}</span></p>
+        <RowItem noBorder={divisionIndex === division}>
+          <p className={countNoteClass}><span>{count}</span></p>
+        </RowItem>
         {instruments.map((instrument, index) => {
           let noteLocation = {
             instrument: instrument.name,
@@ -62,17 +71,19 @@ export default function BeatDivision({
             );
             if (note) {
               return (
-                <Note
-                  noteLocation={noteLocation}
-                  note={{ ...note }}
-                  key={index}
-                />
+                <RowItem >
+                  <Note
+                    noteLocation={noteLocation}
+                    note={{ ...note }}
+                    key={index}
+                  />
+                </RowItem>
               );
             } else {
-              return <Note noteLocation={noteLocation} key={index} />;
+              return <RowItem ><Note noteLocation={noteLocation} key={index} /></RowItem>;
             }
           }
-          return <Note noteLocation={noteLocation} key={index} />;
+          return <RowItem ><Note noteLocation={noteLocation} key={index} /></RowItem>;
         })}
         {isKick && (
           <KickNote
