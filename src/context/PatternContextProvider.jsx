@@ -1,8 +1,8 @@
-import PatternContext from "./PatternContext";
 import { DragDropContext } from '@hello-pangea/dnd'
 import { useState, useEffect } from 'react'
 import stickingPatterns from '../data/sticking-patterns'
 import { useSelector, useDispatch } from "react-redux";
+import PatternContext from "./PatternContext";
 import _ from 'lodash';
 
 function createObjectWithArrays(integer) {
@@ -26,17 +26,47 @@ const instrumentWeight = {
 }
 
 
+const getCount = (beatIndex, division) => {
+    switch (division) {
+      case 3:
+        return [
+          { count: beatIndex + 1, hidden: false },
+          { count: "+", hidden: false },
+          { count: "a", hidden: false },
+        ];
+      case 4:
+        return [
+          { count: beatIndex + 1, hidden: false },
+          { count: "e", hidden: false },
+          { count: "+", hidden: false },
+          { count: "a", hidden: false },
+        ];
+      case 6:
+        return [
+          { count: beatIndex + 1, hidden: false },
+          { count: "t", hidden: false },
+          { count: "t", hidden: false },
+          { count: "+", hidden: false },
+          { count: "t", hidden: false },
+          { count: "t", hidden: false },
+        ];
+      default:
+        break;
+    }
+  };
+
+
 export default function PatternContextProvider({ index, children }) {
     const patternIndex = index
     const dispatch = useDispatch()
     let pattern = useSelector(state => state.player.patterns[index])
+    let instruments = useSelector(state => state.player.instruments)
     const [areStrokesRevealed, setStrokesRevealed] = useState(false)
     const [beats, setBeats] = useState([])
 
     
     function updateState(pattern) {
-        let newPattern = getStrokeTypes(pattern)
-        dispatch({type: 'player/editPatterns', payload: {index: patternIndex, pattern: newPattern}})
+        dispatch({type: 'player/editPatterns', payload: {index: patternIndex, pattern}})
     }
 
     const dropPattern = (result) => {
@@ -179,11 +209,10 @@ export default function PatternContextProvider({ index, children }) {
         const updatedPattern = _.cloneDeep(pattern)
 
         updatedPattern.beats.forEach(beat => {
-            for (let i = 0; i < beat.division; i++) {
-                beat.beatDivisions[i] = createObjectWithArrays(beat.division)
-            }
+            beat.beatDivisions = createObjectWithArrays(beat.division)
             beat.kicksAt = []
             beat.hhPedalsAt = []
+            beat.count = []
         })
 
         updateState(updatedPattern)
@@ -193,8 +222,8 @@ export default function PatternContextProvider({ index, children }) {
     function generateRandomPattern() {
 
         let updatedPattern = _.cloneDeep(pattern)
-
-        for (let i = 0; i < beatsPerMeasure; i++) {
+        let pickedInstruments = _.cloneDeep(instruments.filter(i => i.active && i.limb==='hand'))
+        for (let i = 0; i < updatedPattern.beats.length; i++) {
             let currentBeat = updatedPattern.beats[i]
             let currentBeatDivision = currentBeat.division
 
@@ -202,26 +231,18 @@ export default function PatternContextProvider({ index, children }) {
                 currentBeat.beatDivisions[j] = []
                 currentBeat.kicksAt = []
 
-                let randomInstrumentIdx = Math.floor(Math.random() * instruments.length)
-                let instrument = instruments[randomInstrumentIdx]
+                let randomInstrumentIdx = Math.floor(Math.random() * pickedInstruments.length)
+                let instrument = pickedInstruments[randomInstrumentIdx]
                 let type = Math.random() >= 0.5 ? "accent" : "ghost"
-                let hand = Math.random() >= 0.3 ? "R" : "L"
+                let hand = Math.random() >= 0.5 ? "R" : "L"
                 let note = { hand, type, instrument: instrument.name, instrumentIndex: instrument.index }
                 currentBeat.beatDivisions[j].push(note)
-
-                for (let k = 0; k < currentBeatDivision; k++) {
-                    let kickAt = Math.random() >= 0.5 ? true : false
-                    if (kickAt) {
-                        currentBeat.kicksAt.push(k)
-                    }
-                }
             }
         }
 
         updateState(updatedPattern)
     }
 
-    // save for l8r
     function handleInstruments(instrument) {
         const doesInstrumentExist = instruments.find(i => i.name === instrument);
 
@@ -285,9 +306,10 @@ export default function PatternContextProvider({ index, children }) {
     function changeBeatDivision(beatIndex, division) {
         let newPattern = _.cloneDeep(pattern)
         const beat = newPattern.beats.find(beat => beat.index === beatIndex)
+        if(beat.division === division) return
 
         beat.division = division
-
+        beat.count = getCount(beatIndex, division)
         beat.beatDivisions = createObjectWithArrays(beat.division)
         beat.kicksAt = []
         beat.hhPedalsAt = []
@@ -340,6 +362,7 @@ export default function PatternContextProvider({ index, children }) {
         if(pattern.beats.length >= 5) return
         let newBeat = {
             division: 4,
+            count: [],
             beatDivisions: {
               0: [],
               1: [],
@@ -379,6 +402,19 @@ export default function PatternContextProvider({ index, children }) {
         updateState(updatedPattern)
       }
 
+      function setGrouping(grouping, beatIndex) {
+        let updatedPattern = _.cloneDeep(pattern)
+        let beat = updatedPattern.beats[beatIndex]
+        let beatDivisions = beat.beatDivisions
+
+        for(const divisionIndex in beatDivisions) {
+            beatDivisions[divisionIndex] = []
+            beatDivisions[divisionIndex].push({hand: grouping[divisionIndex], type: 'ghost', instrumentIndex: 2, instrument: 'snare', limb: 'hand'})
+        }
+
+        updateState(updatedPattern)
+      }
+
 
     const context = {
         areStrokesRevealed,
@@ -391,6 +427,7 @@ export default function PatternContextProvider({ index, children }) {
         changeStrokeType,
         resetPattern,
         changeBeatDivision,
+        setGrouping,
         getStrokeTypes,
         toggleStrokeTypes,
         addBeat,

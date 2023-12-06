@@ -7,6 +7,7 @@ import KickNote from "./KickNote";
 import HHPedalNote from './HHPedalNote'
 import RowItem from '../layout/RowItem'
 import ColItem from '../layout/ColItem'
+import DisableButton from '../layout/Button'
 import {playSample} from '../services/audio.service.js'
 import { useSelector, useDispatch } from "react-redux";
 
@@ -15,11 +16,12 @@ export default function BeatDivision({
   divisionIndex,
   currentDivision,
   isCurrentBeat,
-  beat
+  beat,
+  hideCount
 }) {
   const {index: beatIndex, kicksAt, hhPedalsAt, division} = beat
   const notes = beat.beatDivisions[divisionIndex]
-  const {isPlaying, isKick, isHHPedal, instruments, currentLocation} = useSelector(state => state.player)
+  const {isPlaying, instruments, currentLocation} = useSelector(state => state.player)
   const { dropNote, patternIndex } = useContext(PatternContext);
   
   const isCurrentDivision = (
@@ -29,6 +31,8 @@ export default function BeatDivision({
     currentDivision === divisionIndex
   )
 
+  const isKickOn = instruments.filter(i => i.active).some(i => i.name === 'kick')
+  const isHHPedalOn = instruments.filter(i => i.active).some(i => i.name === 'hh-pedal')
   const hasKick = kicksAt.includes(divisionIndex);
   const hasHHPedal = hhPedalsAt.includes(divisionIndex)
 
@@ -37,8 +41,8 @@ export default function BeatDivision({
       const noteVolume = note.type === "accent" ? 1 : 0.2;
       playSample(note.instrument, noteVolume);
     });
-    if (hasKick && isKick) playSample("kick", 0.8);
-    if (hasHHPedal && isHHPedal) playSample("hh pedal", 0.5)
+    if (hasKick && isKickOn) playSample("kick", 1);
+    if (hasHHPedal && isHHPedalOn) playSample("hh pedal", 1)
   }
 
   const className = (isCurrentDivision) => {
@@ -51,14 +55,16 @@ export default function BeatDivision({
   }
 
 
-  const countNoteClass = `h-full flex justify-center items-center text-center bg-dm-blue  ${isCurrentDivision ? 'text-lime-400' : 'text-white'}`
+  const countBaseClasses = `w-full h-full flex justify-center items-center text-center bg-dm-blue ${isCurrentDivision ? 'text-lime-400' : 'text-white'}`
+  const countHoverClasses = 'hover:cursor-pointer hover:bg-dm-blue/80'
+  
   return (
     <DragDropContext onDragEnd={dropNote}>
       <div className={className(isCurrentDivision)}>
         <RowItem noBorder={divisionIndex === division}>
-          <p className={countNoteClass}><span>{count}</span></p>
+          <DisableButton className={countBaseClasses} hover={countHoverClasses} onClick={() => hideCount(divisionIndex)}>{count.hidden ? '' : count.count}</DisableButton>
         </RowItem>
-        {instruments.map((instrument, index) => {
+        {[...instruments].filter(i=>i.limb==='hand').sort((a, b) => b.index - a.index).filter(instrument => instrument.active).map((instrument, index) => {
           let noteLocation = {
             instrument: instrument.name,
             beatIndex,
@@ -71,28 +77,28 @@ export default function BeatDivision({
             );
             if (note) {
               return (
-                <RowItem >
+                <RowItem key={index}>
                   <Note
                     noteLocation={noteLocation}
                     note={{ ...note }}
-                    key={index}
+                    
                   />
                 </RowItem>
               );
             } else {
-              return <RowItem ><Note noteLocation={noteLocation} key={index} /></RowItem>;
+              return <RowItem key={index} ><Note noteLocation={noteLocation}  /></RowItem>;
             }
           }
-          return <RowItem ><Note noteLocation={noteLocation} key={index} /></RowItem>;
+          return <RowItem key={index}><Note noteLocation={noteLocation} key={index} /></RowItem>;
         })}
-        {isKick && (
+        {isKickOn && (
           <KickNote
             isPopulated={hasKick}
             divisionIndex={divisionIndex}
             beatIndex={beatIndex}
           />
         )}
-        {isHHPedal && (
+        {isHHPedalOn && (
           <HHPedalNote
             isPopulated={hasHHPedal}
             divisionIndex={divisionIndex}

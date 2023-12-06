@@ -4,7 +4,7 @@ import RowItem from "../layout/RowItem"
 
 
 export default function KickNote({ isPopulated, divisionIndex, beatIndex }) {
-    const baseClasses = 'h-full bg-white text-center w-full flex justify-center items-center hover:cursor-pointer hover:bg-zinc-100 font-semibold'
+    const baseClasses = 'h-full text-center w-full flex justify-center items-center hover:cursor-pointer hover:bg-zinc-100 font-bold'
     const { addKick } = useContext(PatternContext)
 
     return (

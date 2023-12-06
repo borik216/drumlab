@@ -1,6 +1,4 @@
-import StickingPatterns from './cmps/StickingPatterns'
 import PatternPlayer from './cmps/PatternPlayer'
-import PatternContextProvider from './context/PatternContextProvider.jsx'
 
 
 function App() {

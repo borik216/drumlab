@@ -1,58 +1,84 @@
 import PatternContext from "../context/PatternContext";
 import { useContext } from "react";
-import Header from './Header'
+import { useSelector, useDispatch } from "react-redux";
+import DropMenu from "../layout/DropMenu";
 
 export default function InstrumentPicker() {
-  const { instruments: pickedInstruments, handleInstruments, toggleKick, toggleHHPedal, isKick, isHHPedal } =
-    useContext(PatternContext);
+  const dispatch = useDispatch();
+  const { isKick, isHHPedal, instruments } = useSelector(
+    (state) => state.player
+  );
   let instrumentClass = (isPicked) => {
     return `
-   
-              text-center
               capitalize
-              border
               flex-1
-              h-6
               inline-block 
               align-middle
               text-sm
-              ${isPicked ? 'hover:bg-blue-600' : 'hover:bg-gray-300'}
               hover:cursor-pointer
               select-none
-              ${isPicked ? 'border-dotted' : 'border-solid'}
-              ${isPicked ? 'bg-blue-500' : 'bg-gray-200'}
-              ${isPicked ? 'border-blue-500' : 'border-zinc-400'}
-              ${isPicked ? 'border-2' : 'border'}
-              ${isPicked ? 'text-white' : 'text-black '}
-              `
+              px-1
+              ${isPicked ? "text-white" : "text-black "}
+              ${isPicked ? "hover:bg-blue-600" : "hover:bg-gray-300"}
+              ${isPicked ? "bg-blue-500" : "bg-white"}
+              `;
+  };
+  // ${isPicked ? 'text-white' : 'text-black '}
+
+  function handleInstruments(instrument) {
+    dispatch({ type: "player/toggleInstruments", payload: instrument });
   }
 
+  function toggleKick() {
+    dispatch({ type: "player/toggleKick" });
+  }
+  function toggleHHPedal() {
+    dispatch({ type: "player/toggleHHPedal" });
+  }
 
-  const instruments = ["snare", "ride", "floor tom", "mid tom", "high tom", "hi hat", "open hat", "crash"];
   return (
     <>
-      <Header text={'Hand Instruments'} />
-      <div className="flex justify-between flex-wrap mx-auto max-w-3xl mb-4 mt-2 gap-px">
-        {instruments.map((instrument) => {
-          var isPicked = pickedInstruments.find(i => i.name === instrument)
-          return (
-            <span
-              className={instrumentClass(isPicked)}
-              onClick={() => handleInstruments(instrument)}
-            >
-              {instrument}
-            </span>
-          );
-        })}
+      <Header text={"Hands"} />
+      <div className="flex flex-col justify-between divide-y-2 mb-2">
+        {instruments
+          .filter((i) => i.limb === "hand")
+          .map((instrument, index) => {
+            return (
+              <span
+                key={index}
+                className={instrumentClass(instrument.active)}
+                onClick={() => handleInstruments(instrument)}
+              >
+                {instrument.name}
+              </span>
+            );
+          })}
       </div>
 
-      <Header text={'Legs'} />
-      <div className="flex justify-between flex-wrap mx-auto max-w-3xl mb-4 mt-2 gap-px">
-        <span className={instrumentClass(isKick)} onClick={() => toggleKick()}>Kick</span>
-        <span className={instrumentClass(isHHPedal)} onClick={() => toggleHHPedal()}>HH Pedal</span>
-
-
+      <Header text={"Legs"} />
+      <div className="flex flex-col justify-between divide-y-2 mb-2">
+        {instruments
+          .filter((i) => i.limb === "leg")
+          .map((instrument, index) => {
+            return (
+              <span
+                key={index}
+                className={instrumentClass(instrument.active)}
+                onClick={() => handleInstruments(instrument)}
+              >
+                {instrument.name}
+              </span>
+            );
+          })}
       </div>
     </>
+  );
+}
+
+function Header({ text }) {
+  return (
+    <h3 className="text-black font-semibold mx-auto border-b-2 border-b-zinc-400 mb-1 diagonal-fractions w-full px-1">
+      {text}
+    </h3>
   );
 }

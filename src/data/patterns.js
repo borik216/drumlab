@@ -1,77 +1,111 @@
 const patternsTemplate = [
-    {
-        repeat: 2,
-        beats: [
-            {
-              index: 0,
-              division: 4,
-              beatDivisions: {
-                0: [],
-                1: [],
-                2: [],
-                3: [],
-              },
-              kicksAt: [0],
-              hhPedalsAt: [0],
-            },
-            {
-              index: 1,
-              division: 4,
-              beatDivisions: {
-                0: [],
-                1: [],
-                2: [],
-                3: [],
-              },
-              kicksAt: [],
-              hhPedalsAt: [0],
-            },
-            {
-              index: 2,
-              division: 4,
-              beatDivisions: {
-                0: [],
-                1: [],
-                2: [],
-                3: [],
-              },
-              kicksAt: [],
-              hhPedalsAt: [0],
-            },
-            {
-              index: 3,
-              division: 4,
-              beatDivisions: {
-                0: [],
-                1: [],
-                2: [],
-                3: [],
-              },
-              kicksAt: [],
-              hhPedalsAt: [0],
-            },
+  {
+    repeat: 2,
+    beats:   [
+        {
+          index: 0,
+          division: 4,
+          count: [
+            { count: 1, hidden: false },
+            { count: "e", hidden: false },
+            { count: "+", hidden: false },
+            { count: "a", hidden: false },
           ],
-    },
+          beatDivisions: {
+            0: [],
+            1: [],
+            2: [],
+            3: [],
+          },
+          kicksAt: [],
+          hhPedalsAt: [],
+        },
+        {
+          index: 1,
+          division: 4,
+          count: [
+            { count: 2, hidden: false },
+            { count: "e", hidden: false },
+            { count: "+", hidden: false },
+            { count: "a", hidden: false },
+          ],
+          beatDivisions: {
+            0: [],
+            1: [],
+            2: [],
+            3: [],
+          },
+          kicksAt: [],
+          hhPedalsAt: [],
+        },
+        {
+          index: 2,
+          division: 4,
+          count: [
+            { count: 3, hidden: false },
+            { count: "e", hidden: false },
+            { count: "+", hidden: false },
+            { count: "a", hidden: false },
+          ],
+          beatDivisions: {
+            0: [],
+            1: [],
+            2: [],
+            3: [],
+          },
+          kicksAt: [],
+          hhPedalsAt: [],
+        },
+        {
+          index: 3,
+          division: 4,
+          count: [
+            { count: 4, hidden: false },
+            { count: "e", hidden: false },
+            { count: "+", hidden: false },
+            { count: "a", hidden: false },
+          ],
+          beatDivisions: {
+            0: [],
+            1: [],
+            2: [],
+            3: [],
+          },
+          kicksAt: [],
+          hhPedalsAt: [],
+        },
+      ],
+},
     {
         repeat: 2,
         beats:   [
             {
               index: 0,
-              division: 6,
+              division: 4,
+              count: [
+                { count: 1, hidden: false },
+                { count: "e", hidden: false },
+                { count: "+", hidden: false },
+                { count: "a", hidden: false },
+              ],
               beatDivisions: {
                 0: [],
                 1: [],
                 2: [],
                 3: [],
-                4: [],
-                5: [],
               },
-              kicksAt: [0],
-              hhPedalsAt: [0],
+              kicksAt: [],
+              hhPedalsAt: [],
             },
             {
               index: 1,
               division: 4,
+              count: [
+                { count: 2, hidden: false },
+                { count: "e", hidden: false },
+                { count: "+", hidden: false },
+                { count: "a", hidden: false },
+              ],
               beatDivisions: {
                 0: [],
                 1: [],
@@ -79,11 +113,17 @@ const patternsTemplate = [
                 3: [],
               },
               kicksAt: [],
-              hhPedalsAt: [0],
+              hhPedalsAt: [],
             },
             {
               index: 2,
               division: 4,
+              count: [
+                { count: 3, hidden: false },
+                { count: "e", hidden: false },
+                { count: "+", hidden: false },
+                { count: "a", hidden: false },
+              ],
               beatDivisions: {
                 0: [],
                 1: [],
@@ -91,11 +131,17 @@ const patternsTemplate = [
                 3: [],
               },
               kicksAt: [],
-              hhPedalsAt: [0],
+              hhPedalsAt: [],
             },
             {
               index: 3,
               division: 4,
+              count: [
+                { count: 4, hidden: false },
+                { count: "e", hidden: false },
+                { count: "+", hidden: false },
+                { count: "a", hidden: false },
+              ],
               beatDivisions: {
                 0: [],
                 1: [],
@@ -103,7 +149,7 @@ const patternsTemplate = [
                 3: [],
               },
               kicksAt: [],
-              hhPedalsAt: [0],
+              hhPedalsAt: [],
             },
           ],
     }

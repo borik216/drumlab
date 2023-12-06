@@ -2,7 +2,7 @@ let audioContext = new AudioContext();
 
 export const samples = {}
 
-const sounds = ["snare", "hh pedal", "ride", "kick", "floor tom", "mid tom", "high tom", "hi hat", "open hat" , "crash", "metronome"]
+const sounds = ["snare", "hh pedal", "ride", "kick", "floor-tom", "rack-tom", "hi-hat", "open hat", "metronome"]
 
 export function createAudioCtx() {
     audioContext = new AudioContext()
@@ -30,7 +30,6 @@ function getPath(sound) {
 }
 
 export function playSample(sound, volume = 1.0) {
-    console.log('twice?')
     const sampleSource = audioContext.createBufferSource()
     const gainNode = audioContext.createGain();
     sampleSource.buffer = samples[sound]
