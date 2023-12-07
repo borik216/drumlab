@@ -1,8 +1,7 @@
-import DropMenu from '../../layout/DropMenu'
 import {useRef, useEffect, useState, useContext} from 'react'
 import  PatternContext  from '../../context/PatternContext'
 import { Transition } from '@headlessui/react';
-import DisableButton from '../../layout/Button'
+import TooltipButton from "../../layout/TooltipButton";
 
 function generateLRCombinations(n) {
     // Base case: if n is 0, return an array with an empty string
@@ -29,8 +28,8 @@ export default function GroupingsMenu({beatIndex, division}) {
     const groupings = generateLRCombinations(division)
     const {setGrouping} = useContext(PatternContext)
     const baseClass = 'w-full h-full px-2 hover:bg-zinc-800 hover:text-white'
-    const openBtnClass = (isOpen) => `w-full h-full ${isOpen && 'bg-neutral-700 text-white'}`
-    const hoverClasses = 'hover:bg-neutral-700 hover:text-white'
+    const openBtnClass = (isOpen) => `w-full h-full ${isOpen && 'bg-neutral-700 text-white'} hover:bg-neutral-700 hover:text-white`
+    // const hoverClasses = 'hover:bg-neutral-700 hover:text-white'
 
     const handleClickOutside = (event) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -54,9 +53,9 @@ export default function GroupingsMenu({beatIndex, division}) {
     return (
         <div className='relative w-full h-full flex-1' ref={dropdownRef}>
   
-        <DisableButton className={openBtnClass(isOpen)} hover={hoverClasses} onClick={() => setIsOpen(prev => !prev)}>
+        <TooltipButton className={openBtnClass(isOpen)} onClick={() => setIsOpen(prev => !prev)} text='Groupings' menu={isOpen}>
           G
-        </DisableButton>
+        </TooltipButton>
         <Transition
           show={isOpen}
           enter="transition-opacity duration-300 ease-out"

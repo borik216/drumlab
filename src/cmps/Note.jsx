@@ -4,7 +4,7 @@ import PatternContext from "../context/PatternContext";
 import StrokeType from "./StrokeType";
 import RowItem from "../layout/RowItem";
 import { useSelector, useDispatch } from "react-redux";
-import DisableButton from '../layout/Button'
+import TooltipButton from '../layout/TooltipButton'
 
 function getColor(instrument) {
   switch (instrument) {
@@ -33,7 +33,7 @@ const Note = ({ note, noteLocation }) => {
   const { changeStrokeType, toggleNote } = useContext(PatternContext);
   const areStrokesRevealed = useSelector(state => state.player.areStrokesRevealed)
   const draggableId = Object.values(noteLocation).join("-");
-  const baseClasses = "h-full w-full text-center flex justify-evenly items-center font-bold";
+  const baseClasses = "w-full h-full text-center flex justify-evenly items-center font-bold bg-inherit";
 
   const noteClasses = () => {
     const accented = note &&  ['snare', 'hi-hat'].includes(noteLocation.instrument) && note.type === "accent"
@@ -44,47 +44,17 @@ const Note = ({ note, noteLocation }) => {
 
   const hoverClasses = 'hover:cursor-pointer hover:bg-zinc-100'
 
-  // const draggedNoteClasses = (isDragging) => isDragging
-  //   ? `w-full h-full ${baseClasses} outline outline-2 outline-yellow-500`
-  //   : "";
+  const noteContents = (
+    <div className="w-full flex items-center">
+      <span className='flex-1'>{note ? note.hand : ' '}</span>
+      {areStrokesRevealed && note && ['snare', 'hi-hat'].includes(noteLocation.instrument) && <StrokeType stroke={note.stroke}/>}
+    </div>
+  )
 
   return (
-
-    <DisableButton className={noteClasses()} hover={hoverClasses} onClick={() => toggleNote(noteLocation)} onContextMenu={(e) => changeStrokeType(e, noteLocation)}>
-        {note && note.hand}
-    </DisableButton>
-    // <Droppable droppableId={`${draggableId}-d`}>
-    //   {(provided, snapshot) => (
-    //     <div
-    //       ref={provided.innerRef}
-    //       {...provided.droppableProps}
-    //       className={noteClasses()}
-    //       onClick={() => toggleNote(noteLocation)}
-    //       onContextMenu={(e) => changeStrokeType(e, noteLocation)}
-    //     >
-    //       <DisableButton className={}>
-    //       <Draggable
-    //         index={noteLocation.instrumentIndex}
-    //         draggableId={draggableId}
-    //       >
-    //         {(provided, snapshot) => (
-    //           <span
-    //             ref={provided.innerRef}
-    //             {...provided.draggableProps}
-    //             {...provided.dragHandleProps}
-    //             className={draggedNoteClasses(snapshot.isDragging)}
-    //           >
-    //             {note && note.hand}
-    //           </span>
-    //         )}
-    //       </Draggable>
-    //       {snapshot.isDragging && <span className={`${noteClasses(false)} dnd-copy`}>{note.hand}</span>}
-    //       {note && areStrokesRevealed && <StrokeType stroke={note.stroke} />}
-    //     </div>
-    //     </DisableButton>
-    //   )}
-    // </Droppable>
-  );
+    <TooltipButton className={noteClasses()} onHover={hoverClasses} onClick={() => toggleNote(noteLocation)} onContextMenu={(e) => changeStrokeType(e, noteLocation)} buttonText={noteContents}/>
+    
+  ) 
 };
 
 export default Note;

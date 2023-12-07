@@ -212,7 +212,6 @@ export default function PatternContextProvider({ index, children }) {
             beat.beatDivisions = createObjectWithArrays(beat.division)
             beat.kicksAt = []
             beat.hhPedalsAt = []
-            beat.count = []
         })
 
         updateState(updatedPattern)
@@ -359,10 +358,16 @@ export default function PatternContextProvider({ index, children }) {
     }
 
     function addBeat(atIndex) {
+        
         if(pattern.beats.length >= 5) return
         let newBeat = {
             division: 4,
-            count: [],
+            count: [
+                { count: atIndex, hidden: false },
+                { count: "e", hidden: false },
+                { count: "+", hidden: false },
+                { count: "a", hidden: false },
+              ],
             beatDivisions: {
               0: [],
               1: [],
@@ -387,8 +392,10 @@ export default function PatternContextProvider({ index, children }) {
         
       
         updatedPattern.beats = updatedPattern.beats.map((beat, i) => ({ ...beat, index: i }))
-      
-    
+        updatedPattern.beats.forEach((beat, i) => {
+            beat.count[0].count = i + 1
+        })
+        
         updateState(updatedPattern)
       }
 
@@ -399,6 +406,10 @@ export default function PatternContextProvider({ index, children }) {
         updatedPattern.beats = updatedPattern.beats.filter(beat => beat.index !== atIndex)
         updatedPattern.beats = updatedPattern.beats.map((beat, i) => ({...beat, index: i}))
         
+        updatedPattern.beats.forEach((beat, i) => {
+            beat.count[0].count = i + 1
+        })
+
         updateState(updatedPattern)
       }
 
@@ -411,6 +422,8 @@ export default function PatternContextProvider({ index, children }) {
             beatDivisions[divisionIndex] = []
             beatDivisions[divisionIndex].push({hand: grouping[divisionIndex], type: 'ghost', instrumentIndex: 2, instrument: 'snare', limb: 'hand'})
         }
+
+        
 
         updateState(updatedPattern)
       }

@@ -8,7 +8,7 @@ const Strokes = () => {
       id="up-down-arrow"
       data-name="Flat Color"
       xmlns="http://www.w3.org/2000/svg"
-      className="icon flat-color"
+      className="h-8 w-8"
     >
       <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
       <g

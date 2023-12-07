@@ -1,7 +1,7 @@
 import PatternContext from "../context/PatternContext";
 import { useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import DropMenu from "../layout/DropMenu";
+// import DropMenu from "../layout/DropMenu";
 
 export default function InstrumentPicker() {
   const dispatch = useDispatch();

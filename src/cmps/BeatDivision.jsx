@@ -7,7 +7,7 @@ import KickNote from "./KickNote";
 import HHPedalNote from './HHPedalNote'
 import RowItem from '../layout/RowItem'
 import ColItem from '../layout/ColItem'
-import DisableButton from '../layout/Button'
+import TooltipButton from "../layout/TooltipButton"
 import {playSample} from '../services/audio.service.js'
 import { useSelector, useDispatch } from "react-redux";
 
@@ -50,19 +50,18 @@ export default function BeatDivision({
       flex-1
       flex
       flex-col
-      ${isCurrentDivision ? 'bg-lime-400/50' : ''}
+      ${isCurrentDivision ? 'bg-lime-400/50' : 'bg-white'}
     `
   }
 
 
-  const countBaseClasses = `w-full h-full flex justify-center items-center text-center bg-dm-blue ${isCurrentDivision ? 'text-lime-400' : 'text-white'}`
-  const countHoverClasses = 'hover:cursor-pointer hover:bg-dm-blue/80'
-  
+  const countBaseClasses = ` w-full h-full flex justify-center items-center text-center bg-dm-blue ${isCurrentDivision ? 'text-lime-400' : 'text-white'} `
+  const countHoverClasses = ' hover:cursor-pointer hover:bg-dm-blue/80 '
   return (
     <DragDropContext onDragEnd={dropNote}>
       <div className={className(isCurrentDivision)}>
         <RowItem noBorder={divisionIndex === division}>
-          <DisableButton className={countBaseClasses} hover={countHoverClasses} onClick={() => hideCount(divisionIndex)}>{count.hidden ? '' : count.count}</DisableButton>
+        <TooltipButton onClick={() => hideCount(divisionIndex)} buttonText={count.hidden ? '' : count.count} className={countBaseClasses} onHover={countHoverClasses} />
         </RowItem>
         {[...instruments].filter(i=>i.limb==='hand').sort((a, b) => b.index - a.index).filter(instrument => instrument.active).map((instrument, index) => {
           let noteLocation = {

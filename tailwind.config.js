@@ -21,7 +21,8 @@ export default {
         'outline': 'inset 1px 1px black, inset -1px -1px black;'
       },
       height: {
-        'test': '24rem'
+        'test': '24rem',
+        'player-controls': '60px'
       }
     },
   },
