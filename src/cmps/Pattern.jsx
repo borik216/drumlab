@@ -12,7 +12,6 @@ export default function Pattern({ index, playerRef }) {
   const currentLocation = useSelector((state) => state.player.currentLocation);
   const isEditMode = useSelector((state) => state.player.isEditMode);
   const isPlaying = useSelector((state) => state.player.isPlaying);
-  const {get}
 
   const showToolbar = isEditMode && !isPlaying
   const isCurrentPattern = isPlaying && currentLocation.atPattern === index;
