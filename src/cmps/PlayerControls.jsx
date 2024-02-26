@@ -14,6 +14,12 @@ export default function PlayerControls({ play, stop, isPlaying, tempo }) {
 
   function handleTempoChange({ target }) {
     const inputValue = target.value.trim(); // Remove leading and trailing whitespace
+
+    if (inputValue === "") {
+      setTempTempo(0); // Set tempTempo to 0 if the input is empty
+      return;
+    }
+
     const isValidNumber = /^\d+$/.test(inputValue); // Check if the input consists of digits only
     if (!isValidNumber) return; // If input is not a valid number, return without dispatching
 
