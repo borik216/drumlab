@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getStrokeTypes } from "../services/pattern.util"
+import { getStrokeTypes } from "../services/pattern.util";
 import patternsTemplate from "../data/patterns.js";
 import patternTemplate from "../data/pattern-template.js";
 import _ from "lodash";
@@ -21,9 +21,10 @@ export const playerSlice = createSlice({
       { name: "kick", active: false, index: 1, limb: "leg" },
       { name: "snare", active: true, index: 2, limb: "hand" },
       { name: "hi-hat", active: false, index: 3, limb: "hand" },
-      { name: "rack-tom", active: false, index: 4, limb: "hand" },
-      { name: "floor-tom", active: false, index: 5, limb: "hand" },
-      { name: "ride", active: false, index: 6, limb: "hand" },
+      { name: "tom1", active: false, index: 4, limb: "hand" },
+      { name: "tom2", active: false, index: 5, limb: "hand" },
+      { name: "tom3", active: false, index: 6, limb: "hand" },
+      { name: "ride", active: false, index: 7, limb: "hand" },
     ],
   },
   reducers: {
@@ -38,36 +39,39 @@ export const playerSlice = createSlice({
       state.currentLocation = { atPattern: 0, atBeat: 0 };
       state.totalBeatsPlayed = 0;
       state.totalMeasuresPlayed = 0;
-      state.isPlaying = false
+      state.isPlaying = false;
     },
     advanceLocation: (state) => {
       state.totalBeatsPlayed += 1;
       const newLocation = { ...state.currentLocation };
       const currentPattern = state.patterns[state.currentLocation.atPattern];
-      const totalBeatsInPattern = currentPattern.beats.length * currentPattern.repeat;
-      const beatsInMeasure = currentPattern.beats.length
+      const totalBeatsInPattern =
+        currentPattern.beats.length * currentPattern.repeat;
+      const beatsInMeasure = currentPattern.beats.length;
 
       if (state.totalBeatsPlayed % beatsInMeasure === 0) {
         state.totalMeasuresPlayed += 1;
       }
 
       if (state.totalBeatsPlayed === totalBeatsInPattern) {
-        newLocation.atPattern = (state.currentLocation.atPattern + 1) % state.patterns.length;
+        newLocation.atPattern =
+          (state.currentLocation.atPattern + 1) % state.patterns.length;
         state.totalBeatsPlayed = 0;
       }
 
-      newLocation.atBeat = (state.currentLocation.atBeat + 1) % currentPattern.beats.length;
+      newLocation.atBeat =
+        (state.currentLocation.atBeat + 1) % currentPattern.beats.length;
       state.currentLocation = newLocation;
     },
     addPattern: (state) => {
-      if (!state.isEditMode || state.isPlaying) return
+      if (!state.isEditMode || state.isPlaying) return;
       if (state.patterns.length >= 4) return;
       let newPatterns = _.cloneDeep(state.patterns);
       newPatterns.push(patternTemplate);
       state.patterns = newPatterns;
     },
     duplicatePattern: (state, action) => {
-      if (!state.isEditMode || state.isPlaying) return
+      if (!state.isEditMode || state.isPlaying) return;
       if (state.patterns.length >= 4) return;
       let newPatterns = _.cloneDeep(state.patterns);
       let indexToInsert = action.payload + 1;
@@ -77,32 +81,32 @@ export const playerSlice = createSlice({
       state.patterns = newPatterns;
     },
     editPatterns: (state, action) => {
-      if (!state.isEditMode || state.isPlaying) return
+      if (!state.isEditMode || state.isPlaying) return;
       let newPatterns = _.cloneDeep(state.patterns);
       newPatterns[action.payload.index] = action.payload.pattern;
-      newPatterns = getStrokeTypes(newPatterns)
+      newPatterns = getStrokeTypes(newPatterns);
       state.patterns = newPatterns;
     },
     removePattern: (state, action) => {
-      if (!state.isEditMode || state.isPlaying) return
+      if (!state.isEditMode || state.isPlaying) return;
       if (state.patterns.length <= 1) return;
       const patternIndex = action.payload;
       let newPatterns = _.cloneDeep(state.patterns);
       newPatterns.splice(patternIndex, 1);
-      newPatterns = getStrokeTypes(newPatterns)
+      newPatterns = getStrokeTypes(newPatterns);
 
       state.patterns = newPatterns;
     },
     toggleKick: (state) => {
-      if (!state.isEditMode || state.isPlaying) return
+      if (!state.isEditMode || state.isPlaying) return;
       state.isKick = !state.isKick;
     },
     toggleHHPedal: (state) => {
-      if (!state.isEditMode || state.isPlaying) return
+      if (!state.isEditMode || state.isPlaying) return;
       state.isHHPedal = !state.isHHPedal;
     },
     setPatternRepeat: (state, action) => {
-      if (!state.isEditMode || state.isPlaying) return
+      if (!state.isEditMode || state.isPlaying) return;
       const patterns = _.cloneDeep(state.patterns);
       const pattern = patterns[action.payload.patternIndex];
       pattern.repeat = action.payload.repeat;
@@ -110,7 +114,7 @@ export const playerSlice = createSlice({
       state.patterns = patterns;
     },
     toggleInstruments: (state, action) => {
-      if (!state.isEditMode || state.isPlaying) return
+      if (!state.isEditMode || state.isPlaying) return;
       let instruments = _.cloneDeep(state.instruments);
       let patterns = _.cloneDeep(state.patterns);
       const instrumentName = action.payload.name;
@@ -141,7 +145,7 @@ export const playerSlice = createSlice({
       state.instruments = instruments;
     },
     setBeatCount: (state, action) => {
-      if (!state.isEditMode || state.isPlaying) return
+      if (!state.isEditMode || state.isPlaying) return;
       const { beatCount, beatIndex, patternIndex } = action.payload;
       const newPatterns = _.cloneDeep(state.patterns);
       const pattern = newPatterns[patternIndex];
@@ -151,16 +155,16 @@ export const playerSlice = createSlice({
       state.patterns = newPatterns;
     },
     movePattern: (state, action) => {
-      let { patternIndex, direction } = action.payload
-      direction = direction === 'up' ? -1 : +1
+      let { patternIndex, direction } = action.payload;
+      direction = direction === "up" ? -1 : +1;
       const newPatterns = _.cloneDeep(state.patterns);
-      const extractedPattern = newPatterns.splice(patternIndex, 1)[0]
-      newPatterns.splice(patternIndex + direction, 0, extractedPattern)
+      const extractedPattern = newPatterns.splice(patternIndex, 1)[0];
+      newPatterns.splice(patternIndex + direction, 0, extractedPattern);
 
-      state.patterns = newPatterns
+      state.patterns = newPatterns;
     },
     toggleCount: (state, action) => {
-      if (!state.isEditMode || state.isPlaying) return
+      if (!state.isEditMode || state.isPlaying) return;
       const { divisionIndex, beatIndex, patternIndex } = action.payload;
       const newPatterns = _.cloneDeep(state.patterns);
       const pattern = newPatterns[patternIndex];
@@ -174,11 +178,11 @@ export const playerSlice = createSlice({
       state.areStrokesRevealed = !state.areStrokesRevealed;
     },
     setRepeatAmount: (state, action) => {
-      state.repeatAmount = action.payload
+      state.repeatAmount = action.payload;
     },
     toggleEditMode: (state) => {
-      state.isEditMode = !state.isEditMode
-    }
+      state.isEditMode = !state.isEditMode;
+    },
   },
 });
 

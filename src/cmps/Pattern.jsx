@@ -5,7 +5,7 @@ import Beat from "./Beat";
 import { useContext, useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Transition } from "@headlessui/react";
-import TooltipButton from "../layout/TooltipButton"
+import TooltipButton from "../layout/TooltipButton";
 
 export default function Pattern({ index, playerRef }) {
   const pattern = useSelector((state) => state.player.patterns[index]);
@@ -13,14 +13,12 @@ export default function Pattern({ index, playerRef }) {
   const isEditMode = useSelector((state) => state.player.isEditMode);
   const isPlaying = useSelector((state) => state.player.isPlaying);
 
-  const showToolbar = isEditMode && !isPlaying
+  const showToolbar = isEditMode && !isPlaying;
   const isCurrentPattern = isPlaying && currentLocation.atPattern === index;
   return (
     <PatternContextProvider index={index}>
       {showToolbar && <PatternToolbar patternIndex={index} />}
-      <div
-        className={`flex max-w-3xl mx-auto mb-6 relative transition`}
-      >
+      <div className={`flex max-w-3xl mx-auto mb-6 relative transition`}>
         <InstrumentRack patternIndex={index} />
         <Measure patternIndex={index} />
       </div>
@@ -68,17 +66,42 @@ function PatternToolbar({ patternIndex }) {
 
   return (
     <div className="w-3/6 flex ml-auto divide-x-2 divide-slate-300 border border-slate-300">
-      <TooltipButton buttonText={<Add side={"up"} />} className={buttonClass} onClick={() => movePattern("up")} tooltipText='Move Measure Up'/>
-      <TooltipButton buttonText={<Add side={"down"} />} className={buttonClass} onClick={() => movePattern("down")} tooltipText='Move Measure Down'/>
-        <TooltipButton buttonText={<RandomIcon />} className={buttonClass} onClick={generateRandomPattern} tooltipText='Random Sticking'/>
-        <TooltipButton buttonText={<ClearIcon />} className={buttonClass} onClick={resetPattern} tooltipText='Clear Measure'/>
-        <TooltipButton buttonText={<DuplicateIcon />} className={buttonClass} onClick={duplicatePattern} tooltipText='Duplicate Measure'/>
-        <TooltipButton buttonText={<DeleteIcon />} className={buttonClass} onClick={removePattern} tooltipText='Remove Measure'/>
+      <TooltipButton
+        buttonText={<Add side={"up"} />}
+        className={buttonClass}
+        onClick={() => movePattern("up")}
+        tooltipText="Move Measure Up"
+      />
+      <TooltipButton
+        buttonText={<Add side={"down"} />}
+        className={buttonClass}
+        onClick={() => movePattern("down")}
+        tooltipText="Move Measure Down"
+      />
+      {/* <TooltipButton buttonText={<RandomIcon />} className={buttonClass} onClick={generateRandomPattern} tooltipText='Random Sticking'/> */}
+      <TooltipButton
+        buttonText={<ClearIcon />}
+        className={buttonClass}
+        onClick={resetPattern}
+        tooltipText="Clear Measure"
+      />
+      <TooltipButton
+        buttonText={<DuplicateIcon />}
+        className={buttonClass}
+        onClick={duplicatePattern}
+        tooltipText="Duplicate Measure"
+      />
+      <TooltipButton
+        buttonText={<DeleteIcon />}
+        className={buttonClass}
+        onClick={removePattern}
+        tooltipText="Remove Measure"
+      />
     </div>
   );
 }
 
-function DuplicateIcon({ }) {
+function DuplicateIcon({}) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -97,7 +120,7 @@ function DuplicateIcon({ }) {
   );
 }
 
-function DeleteIcon({ }) {
+function DeleteIcon({}) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -115,7 +138,7 @@ function DeleteIcon({ }) {
     </svg>
   );
 }
-function ClearIcon({ }) {
+function ClearIcon({}) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -155,7 +178,7 @@ function RandomIcon() {
   );
 }
 
-function InvertIcon({ }) {
+function InvertIcon({}) {
   return (
     <svg
       fill="#000000"

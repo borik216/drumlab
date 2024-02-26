@@ -1,21 +1,31 @@
-import { useContext } from "react";
-import PatternContext from "../context/PatternContext";
+import { useState } from "react";
 import Play from "../svg-cmp/Play";
+import Loop from "../svg-cmp/Loop";
 import Stop from "../svg-cmp/Stop";
-import Volume from "../svg-cmp/Volume";
 import Strokes from "../svg-cmp/Strokes";
 import InstrumentsPicker from "./InstrumentsPicker";
 import { useSelector, useDispatch } from "react-redux";
-import { changeTempo } from "../slices/player.slice.js";
 import TooltipButton from "../layout/TooltipButton";
 
 export default function PlayerControls({ play, stop, isPlaying, tempo }) {
   const dispatch = useDispatch();
-  const {isEditMode, repeatAmount} = useSelector((state) => state.player)
+  const [tempTempo, setTempTempo] = useState(tempo);
+  const { isEditMode, repeatAmount } = useSelector((state) => state.player);
 
-  function setTempo({ target }) {
-    let tempo = target.value;
-    if (tempo < 20 || tempo > 180) return;
+  function handleTempoChange({ target }) {
+    const inputValue = target.value.trim(); // Remove leading and trailing whitespace
+    const isValidNumber = /^\d+$/.test(inputValue); // Check if the input consists of digits only
+    if (!isValidNumber) return; // If input is not a valid number, return without dispatching
+
+    let tempo = parseInt(inputValue, 10); // Parse the input value as an integer
+    setTempTempo(tempo);
+  }
+
+  function setNewTempo() {
+    let tempo = tempTempo;
+    if (tempo < 20) tempo = 20;
+    if (tempo > 180) tempo = 180;
+    setTempTempo(tempo);
     dispatch({ type: "player/changeTempo", payload: tempo });
   }
 
@@ -26,7 +36,7 @@ export default function PlayerControls({ play, stop, isPlaying, tempo }) {
   const buttonClass =
     " flex justify-center items-center flex-1 px-4 py-2 bg-slate-700 text-white font-semibold transition ease-out hover:ease-in ";
   const hoverClass = " hover:bg-slate-700/90 ";
-  const disabled = !isEditMode || isPlaying
+  const disabled = !isEditMode || isPlaying;
   return (
     <div className="flex mt-4 mx-auto max-w-3xl justify-between w-full border border-black divide-x-2">
       <button
@@ -42,30 +52,36 @@ export default function PlayerControls({ play, stop, isPlaying, tempo }) {
       <div className={buttonClass}>
         <label htmlFor="tempo">BPM:</label>
         <input
-          onChange={setTempo}
+          onChange={handleTempoChange}
+          onBlur={() => setNewTempo()}
           disabled={disabled}
-          type="number"
+          type="text"
           id="tempo"
           className="flex-1 lining-nums bg-inherit border-b text-center w-12 text-white border-b-indigo-50 ml-2 outline-none"
-          value={tempo}
+          value={tempTempo}
         />
       </div>
-        <TooltipButton
+      <TooltipButton
         multiselect
         className={buttonClass}
         onHover={hoverClass}
         tooltipText={"Instruments"}
         menuPosition={"top"}
-        buttonText={<DrumsIcon />}>
-          <InstrumentsPicker />
-        </TooltipButton>
+        buttonText={<DrumsIcon />}
+      >
+        <InstrumentsPicker />
+      </TooltipButton>
       {/* 
             
 
             {/* <DropMenu button={'instruments'} position='top' multiselect>
                 <InstrumentsPicker />
             </DropMenu> */}
-      <button disabled={disabled} className={`${buttonClass} ${!disabled && hoverClass}`} onClick={toggleStrokes}>
+      <button
+        disabled={disabled}
+        className={`${buttonClass} ${!disabled && hoverClass}`}
+        onClick={toggleStrokes}
+      >
         <Strokes />
       </button>
       <TooltipButton
@@ -73,11 +89,12 @@ export default function PlayerControls({ play, stop, isPlaying, tempo }) {
         onHover={hoverClass}
         tooltipText={"Repeat for..."}
         menuPosition={"top"}
-        buttonText={(
-        <span className='flex justify-center gap-2'>
-          {repeatAmount !== 'loop' && <Repeat />}
-          {repeatAmount !== 'loop' ? 'x' + repeatAmount : 'poop'}
-        </span>)}
+        buttonText={
+          <span className="flex justify-center gap-2">
+            {repeatAmount !== "loop" && <Repeat />}
+            {repeatAmount !== "loop" ? "x" + repeatAmount : <Loop />}
+          </span>
+        }
       >
         <button
           onClick={() =>
@@ -131,13 +148,18 @@ export default function PlayerControls({ play, stop, isPlaying, tempo }) {
         </button>
       </TooltipButton>
       <button
-        className={` ${buttonClass + hoverClass} ${isEditMode ? 'bg-slate-700/95' : ''}`}
+        className={` ${buttonClass + hoverClass} ${
+          isEditMode ? "bg-slate-700/95" : ""
+        }`}
         onClick={() => dispatch({ type: "player/toggleEditMode" })}
       >
         <EditIcon />
       </button>
 
-      <button disabled={disabled} className={`${buttonClass} ${!disabled && hoverClass}`}>
+      <button
+        disabled={disabled}
+        className={`${buttonClass} ${!disabled && hoverClass}`}
+      >
         <SaveIcon />
       </button>
       {/*

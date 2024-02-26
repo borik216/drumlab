@@ -19,11 +19,14 @@ function getColor(instrument) {
     case "ride":
       return "bg-cyan-400";
       break;
-    case "rack-tom":
+    case "tom1":
+      return "bg-green-300";
+      break;
+    case "tom2":
       return "bg-green-500";
       break;
-    case "floor-tom":
-      return "bg-purple-500";
+    case "tom3":
+      return "bg-green-700";
       break;
     case "hh-pedal":
       return "bg-yellow-400";
@@ -61,7 +64,9 @@ export default function IntsrumentRack() {
             buttonText={
               <>
                 <Repeat color={"#fff"} w={"w-5"} h={"h-5"} />
-                <span className="font-bold text-white ml-1">{pattern.repeat}</span>
+                <span className="font-bold text-white ml-1">
+                  {pattern.repeat}
+                </span>
               </>
             }
             menuPosition={patternIndex === 0 ? "bottom" : "top"}
