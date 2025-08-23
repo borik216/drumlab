@@ -41,6 +41,7 @@ function getPath(sound) {
 }
 
 export function playSample(sound, volume = 1.0) {
+  if (sound === "metronome") volume = 0.4;
   const sampleSource = audioContext.createBufferSource();
   const gainNode = audioContext.createGain();
   sampleSource.buffer = samples[sound];
