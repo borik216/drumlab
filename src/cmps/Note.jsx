@@ -37,7 +37,7 @@ const Note = ({ note, noteLocation }) => {
   const areStrokesRevealed = useSelector(
     (state) => state.player.areStrokesRevealed
   );
-  const draggableId = Object.values(noteLocation).join("-");
+  const draggableId = `${noteLocation.beatIndex}-${noteLocation.divisionIndex}-${noteLocation.instrument}`;
   const baseClasses =
     "w-full h-full text-center flex justify-evenly items-center font-bold bg-inherit";
 

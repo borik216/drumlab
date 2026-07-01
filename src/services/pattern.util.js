@@ -1,40 +1,22 @@
 import _ from 'lodash';
 
-export function createObjectWithArrays(length) {
-    const result = {};
-    for (let i = 0; i < length; i++) {
-        result[i] = [];
-    }
-    return result;
+// v2 shape: `beat.divisions` is a plain array (replaces the beatDivisions object).
+export function createDivisionsArray(length) {
+    return Array.from({ length }, () => []);
 }
 
-export function getCount(beatIndex, division) {
-    switch (division) {
-        case 3:
-            return [
-                { count: beatIndex + 1, hidden: false },
-                { count: '+', hidden: false },
-                { count: 'a', hidden: false },
-            ];
-        case 4:
-            return [
-                { count: beatIndex + 1, hidden: false },
-                { count: 'e', hidden: false },
-                { count: '+', hidden: false },
-                { count: 'a', hidden: false },
-            ];
-        case 6:
-            return [
-                { count: beatIndex + 1, hidden: false },
-                { count: 't', hidden: false },
-                { count: 't', hidden: false },
-                { count: '+', hidden: false },
-                { count: 't', hidden: false },
-                { count: 't', hidden: false },
-            ];
-        default:
-            break;
-    }
+const COUNT_LABELS = {
+    3: ['+', 'a'],
+    4: ['e', '+', 'a'],
+    6: ['t', 't', '+', 't', 't'],
+};
+
+// v2 shape: the count label is a pure function of position — slot 0 is the
+// beat's own ordinal number (1-based position among its pattern's beats),
+// every other slot is a fixed label for that division. Nothing is stored.
+export function getCountLabel(beatPosition, division, divisionIndex) {
+    if (divisionIndex === 0) return beatPosition + 1;
+    return COUNT_LABELS[division][divisionIndex - 1];
 }
 
 export function generateLRCombinations(n) {
@@ -55,8 +37,8 @@ export function getStrokeTypes(patterns) {
 
     newPatterns.forEach(pattern => {
         for (const beat of pattern.beats) {
-            for (const divIndex in beat.beatDivisions) {
-                allNotes = allNotes.concat(beat.beatDivisions[divIndex])
+            for (const events of beat.divisions) {
+                allNotes = allNotes.concat(events.filter(event => event.limb === 'hand'))
             }
         }
     })

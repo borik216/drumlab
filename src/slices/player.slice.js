@@ -1,9 +1,20 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getStrokeTypes, createObjectWithArrays, getCount } from "../services/pattern.util";
+import { getStrokeTypes, createDivisionsArray } from "../services/pattern.util";
 import patternsTemplate from "../data/patterns.js";
 import patternTemplate from "../data/pattern-template.js";
 import stickingPatterns from "../data/sticking-patterns.js";
 import _ from "lodash";
+
+const HISTORY_LIMIT = 50;
+
+function pushHistory(state) {
+  state.history.past.push({
+    patterns: _.cloneDeep(state.patterns),
+    instruments: _.cloneDeep(state.instruments),
+  });
+  if (state.history.past.length > HISTORY_LIMIT) state.history.past.shift();
+  state.history.future = [];
+}
 
 export const playerSlice = createSlice({
   name: "player",
@@ -17,6 +28,10 @@ export const playerSlice = createSlice({
     currentLocation: { atPattern: 0, atBeat: 0 },
     currentDivision: 0,
     repeatAmount: 2,
+    history: {
+      past: [],
+      future: [],
+    },
     instruments: [
       { name: "hh-pedal", active: false, index: 0, limb: "leg" },
       { name: "kick", active: false, index: 1, limb: "leg" },
@@ -53,6 +68,7 @@ export const playerSlice = createSlice({
     addPattern: (state) => {
       if (!state.isEditMode || state.isPlaying) return;
       if (state.patterns.length >= 4) return;
+      pushHistory(state);
       let newPatterns = _.cloneDeep(state.patterns);
       newPatterns.push(patternTemplate);
       state.patterns = newPatterns;
@@ -60,6 +76,7 @@ export const playerSlice = createSlice({
     duplicatePattern: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
       if (state.patterns.length >= 4) return;
+      pushHistory(state);
       let newPatterns = _.cloneDeep(state.patterns);
       let indexToInsert = action.payload + 1;
       let duplicatedPattern = _.cloneDeep(newPatterns[action.payload]);
@@ -77,6 +94,7 @@ export const playerSlice = createSlice({
     removePattern: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
       if (state.patterns.length <= 1) return;
+      pushHistory(state);
       const patternIndex = action.payload;
       let newPatterns = _.cloneDeep(state.patterns);
       newPatterns.splice(patternIndex, 1);
@@ -86,6 +104,7 @@ export const playerSlice = createSlice({
     },
     setPatternRepeat: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
+      pushHistory(state);
       const patterns = _.cloneDeep(state.patterns);
       const pattern = patterns[action.payload.patternIndex];
       pattern.repeat = action.payload.repeat;
@@ -94,6 +113,7 @@ export const playerSlice = createSlice({
     },
     toggleInstruments: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
+      pushHistory(state);
       let instruments = _.cloneDeep(state.instruments);
       let patterns = _.cloneDeep(state.patterns);
       const instrumentName = action.payload.name;
@@ -102,38 +122,21 @@ export const playerSlice = createSlice({
       const instrument = instruments.find((i) => i.name === instrumentName);
       instrument.active = !instrument.active;
 
-      // remove notes of that instrument
+      // remove events of that instrument (hand and leg events share one array now)
       patterns.forEach((pattern) => {
         pattern.beats.forEach((beat) => {
-          if (instrument.limb === "hand") {
-            const divisions = beat.beatDivisions;
-            for (const divIndex in divisions) {
-              divisions[divIndex] = divisions[divIndex].filter(
-                (note) => note.instrument !== instrumentName
-              );
-            }
-          } else if (instrumentName === "kick") {
-            beat.kicksAt = [];
-          } else if (instrumentName === "hh-pedal") {
-            beat.hhPedalsAt = [];
-          }
+          beat.divisions = beat.divisions.map((events) =>
+            events.filter((event) => event.instrument !== instrumentName)
+          );
         });
       });
 
       state.patterns = patterns;
       state.instruments = instruments;
     },
-    setBeatCount: (state, action) => {
-      if (!state.isEditMode || state.isPlaying) return;
-      const { beatCount, beatIndex, patternIndex } = action.payload;
-      const newPatterns = _.cloneDeep(state.patterns);
-      const pattern = newPatterns[patternIndex];
-      const beat = pattern.beats.find((beat) => beat.index === beatIndex);
-      beat.count = beatCount;
-
-      state.patterns = newPatterns;
-    },
     movePattern: (state, action) => {
+      if (!state.isEditMode || state.isPlaying) return;
+      pushHistory(state);
       let { patternIndex, direction } = action.payload;
       direction = direction === "up" ? -1 : +1;
       const newPatterns = _.cloneDeep(state.patterns);
@@ -146,10 +149,8 @@ export const playerSlice = createSlice({
       if (!state.isEditMode || state.isPlaying) return;
       const { divisionIndex, beatIndex, patternIndex } = action.payload;
       const newPatterns = _.cloneDeep(state.patterns);
-      const pattern = newPatterns[patternIndex];
-      const beat = pattern.beats.find((beat) => beat.index === beatIndex);
-      const count = beat.count[divisionIndex];
-      count.hidden = !count.hidden;
+      const beat = newPatterns[patternIndex].beats[beatIndex];
+      beat.hiddenCounts[divisionIndex] = !beat.hiddenCounts[divisionIndex];
 
       state.patterns = newPatterns;
     },
@@ -170,123 +171,122 @@ export const playerSlice = createSlice({
       state.repeatAmount = repeatAmount;
       state.isEditMode = isEditMode;
       state.areStrokesRevealed = areStrokesRevealed;
+      state.history = { past: [], future: [] };
     },
     toggleNote: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
-      const { patternIndex, beatIndex, divisionIndex, instrumentIndex, instrument } = action.payload;
+      pushHistory(state);
+      const { patternIndex, beatIndex, divisionIndex, instrument } = action.payload;
       let newPatterns = _.cloneDeep(state.patterns);
-      const beat = newPatterns[patternIndex].beats.find(b => b.index === beatIndex);
-      const divisionNotes = beat.beatDivisions[divisionIndex];
-      const noteIndex = divisionNotes.findIndex(n => n.instrumentIndex === instrumentIndex);
-      const hasRHand = divisionNotes.some(n => n.hand === 'R');
-      const hasLHand = divisionNotes.some(n => n.hand === 'L');
+      const beat = newPatterns[patternIndex].beats[beatIndex];
+      const events = beat.divisions[divisionIndex];
+      const noteIndex = events.findIndex(e => e.limb === 'hand' && e.instrument === instrument);
+      const hasRHand = events.some(e => e.limb === 'hand' && e.hand === 'R');
+      const hasLHand = events.some(e => e.limb === 'hand' && e.hand === 'L');
       if (noteIndex !== -1) {
-        const note = divisionNotes[noteIndex];
+        const note = events[noteIndex];
         if (note.hand === 'R' && hasLHand) {
-          divisionNotes.splice(noteIndex, 1);
+          events.splice(noteIndex, 1);
         } else if (note.hand === 'R' && !hasLHand) {
           note.hand = 'L';
         } else if (note.hand === 'L') {
-          divisionNotes.splice(noteIndex, 1);
+          events.splice(noteIndex, 1);
         }
       } else {
         if (!hasRHand) {
-          divisionNotes.push({ hand: 'R', type: 'ghost', instrumentIndex, instrument });
+          events.push({ limb: 'hand', hand: 'R', type: 'ghost', instrument });
         } else if (hasRHand && !hasLHand) {
-          divisionNotes.push({ hand: 'L', type: 'ghost', instrumentIndex, instrument });
+          events.push({ limb: 'hand', hand: 'L', type: 'ghost', instrument });
         }
       }
       state.patterns = getStrokeTypes(newPatterns);
     },
     changeStrokeType: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
-      const { patternIndex, beatIndex, divisionIndex, instrumentIndex } = action.payload;
+      const { patternIndex, beatIndex, divisionIndex, instrument } = action.payload;
       let newPatterns = _.cloneDeep(state.patterns);
-      const beat = newPatterns[patternIndex].beats.find(b => b.index === beatIndex);
-      const divisionNotes = beat.beatDivisions[divisionIndex];
-      const noteIndex = divisionNotes.findIndex(n => n.instrumentIndex === instrumentIndex);
-      if (noteIndex === -1) return;
-      const note = divisionNotes[noteIndex];
+      const beat = newPatterns[patternIndex].beats[beatIndex];
+      const events = beat.divisions[divisionIndex];
+      const note = events.find(e => e.limb === 'hand' && e.instrument === instrument);
+      if (!note) return;
+      pushHistory(state);
       note.type = note.type === 'ghost' ? 'accent' : 'ghost';
       state.patterns = getStrokeTypes(newPatterns);
     },
     addKick: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
+      pushHistory(state);
       const { patternIndex, beatIndex, pulseIndex } = action.payload;
       let newPatterns = _.cloneDeep(state.patterns);
-      const beat = newPatterns[patternIndex].beats.find(b => b.index === beatIndex);
-      if (beat.kicksAt.includes(pulseIndex)) {
-        beat.kicksAt = beat.kicksAt.filter(i => i !== pulseIndex);
+      const beat = newPatterns[patternIndex].beats[beatIndex];
+      const events = beat.divisions[pulseIndex];
+      const kickIndex = events.findIndex(e => e.limb === 'leg' && e.instrument === 'kick');
+      if (kickIndex !== -1) {
+        events.splice(kickIndex, 1);
       } else {
-        beat.kicksAt.push(pulseIndex);
+        events.push({ limb: 'leg', instrument: 'kick' });
       }
       state.patterns = getStrokeTypes(newPatterns);
     },
     addHHPedal: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
+      pushHistory(state);
       const { patternIndex, beatIndex, pulseIndex } = action.payload;
       let newPatterns = _.cloneDeep(state.patterns);
-      const beat = newPatterns[patternIndex].beats.find(b => b.index === beatIndex);
-      if (beat.hhPedalsAt.includes(pulseIndex)) {
-        beat.hhPedalsAt = beat.hhPedalsAt.filter(i => i !== pulseIndex);
+      const beat = newPatterns[patternIndex].beats[beatIndex];
+      const events = beat.divisions[pulseIndex];
+      const pedalIndex = events.findIndex(e => e.limb === 'leg' && e.instrument === 'hh-pedal');
+      if (pedalIndex !== -1) {
+        events.splice(pedalIndex, 1);
       } else {
-        beat.hhPedalsAt.push(pulseIndex);
+        events.push({ limb: 'leg', instrument: 'hh-pedal' });
       }
       state.patterns = getStrokeTypes(newPatterns);
     },
     resetPattern: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
+      pushHistory(state);
       const { patternIndex } = action.payload;
       let newPatterns = _.cloneDeep(state.patterns);
       newPatterns[patternIndex].beats.forEach(beat => {
-        beat.beatDivisions = createObjectWithArrays(beat.division);
-        beat.kicksAt = [];
-        beat.hhPedalsAt = [];
+        beat.divisions = createDivisionsArray(beat.division);
       });
       state.patterns = getStrokeTypes(newPatterns);
     },
     generateRandomPattern: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
+      pushHistory(state);
       const { patternIndex } = action.payload;
       const pickedInstruments = state.instruments.filter(i => i.active && i.limb === 'hand');
       let newPatterns = _.cloneDeep(state.patterns);
       const pattern = newPatterns[patternIndex];
-      for (let i = 0; i < pattern.beats.length; i++) {
-        const beat = pattern.beats[i];
-        for (let j = 0; j < beat.division; j++) {
-          beat.beatDivisions[j] = [];
-          beat.kicksAt = [];
+      pattern.beats.forEach(beat => {
+        beat.divisions = beat.divisions.map(() => {
           const instrument = pickedInstruments[Math.floor(Math.random() * pickedInstruments.length)];
           const type = Math.random() >= 0.5 ? 'accent' : 'ghost';
           const hand = Math.random() >= 0.5 ? 'R' : 'L';
-          beat.beatDivisions[j].push({ hand, type, instrument: instrument.name, instrumentIndex: instrument.index });
-        }
-      }
+          return [{ limb: 'hand', hand, type, instrument: instrument.name }];
+        });
+      });
       state.patterns = getStrokeTypes(newPatterns);
     },
     dropNote: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
+      pushHistory(state);
       const { patternIndex, draggableId, destinationIndex } = action.payload;
-      const noteData = draggableId.split('-');
-      const beatIndex = +noteData[1];
-      const beatDivisionIndex = +noteData[2];
-      const instrumentIndex = +noteData[3];
+      const [beatIndex, divisionIndex, sourceInstrument] = draggableId.split('-');
       let newPatterns = _.cloneDeep(state.patterns);
-      const beat = newPatterns[patternIndex].beats.find(b => b.index === beatIndex);
-      const divisionNotes = beat.beatDivisions[beatDivisionIndex];
-      const sourceNote = divisionNotes.find(n => n.instrumentIndex === instrumentIndex);
-      const destinationNote = divisionNotes.find(n => n.instrumentIndex === +destinationIndex);
+      const beat = newPatterns[patternIndex].beats[+beatIndex];
+      const events = beat.divisions[+divisionIndex];
+      const sourceNote = events.find(e => e.limb === 'hand' && e.instrument === sourceInstrument);
+      const destinationInstrument = state.instruments.find(i => i.index === destinationIndex);
+      const destinationNote = events.find(e => e.limb === 'hand' && e.instrument === destinationInstrument.name);
       if (destinationNote) {
-        const indexHolder = sourceNote.instrumentIndex;
-        const instrumentHolder = sourceNote.instrument;
-        sourceNote.instrumentIndex = destinationNote.instrumentIndex;
+        const holder = sourceNote.instrument;
         sourceNote.instrument = destinationNote.instrument;
-        destinationNote.instrumentIndex = indexHolder;
-        destinationNote.instrument = instrumentHolder;
+        destinationNote.instrument = holder;
       } else {
-        sourceNote.instrumentIndex = destinationIndex;
-        const instrument = state.instruments.find(i => i.index === destinationIndex);
-        sourceNote.instrument = instrument.name;
+        sourceNote.instrument = destinationInstrument.name;
       }
       state.patterns = getStrokeTypes(newPatterns);
     },
@@ -294,13 +294,12 @@ export const playerSlice = createSlice({
       if (!state.isEditMode || state.isPlaying) return;
       const { patternIndex, beatIndex, division } = action.payload;
       let newPatterns = _.cloneDeep(state.patterns);
-      const beat = newPatterns[patternIndex].beats.find(b => b.index === beatIndex);
+      const beat = newPatterns[patternIndex].beats[beatIndex];
       if (beat.division === division) return;
+      pushHistory(state);
       beat.division = division;
-      beat.count = getCount(beatIndex, division);
-      beat.beatDivisions = createObjectWithArrays(division);
-      beat.kicksAt = [];
-      beat.hhPedalsAt = [];
+      beat.hiddenCounts = new Array(division).fill(false);
+      beat.divisions = createDivisionsArray(division);
       state.patterns = getStrokeTypes(newPatterns);
     },
     addBeat: (state, action) => {
@@ -309,25 +308,17 @@ export const playerSlice = createSlice({
       let newPatterns = _.cloneDeep(state.patterns);
       const pattern = newPatterns[patternIndex];
       if (pattern.beats.length >= 5) return;
+      pushHistory(state);
       const newBeat = {
         division: 4,
-        count: [
-          { count: atIndex, hidden: false },
-          { count: 'e', hidden: false },
-          { count: '+', hidden: false },
-          { count: 'a', hidden: false },
-        ],
-        beatDivisions: { 0: [], 1: [], 2: [], 3: [] },
-        kicksAt: [],
-        hhPedalsAt: [],
+        hiddenCounts: [false, false, false, false],
+        divisions: [[], [], [], []],
       };
       pattern.beats = [
         ...pattern.beats.slice(0, atIndex),
         newBeat,
         ...pattern.beats.slice(atIndex),
       ];
-      pattern.beats = pattern.beats.map((beat, i) => ({ ...beat, index: i }));
-      pattern.beats.forEach((beat, i) => { beat.count[0].count = i + 1; });
       state.patterns = getStrokeTypes(newPatterns);
     },
     removeBeat: (state, action) => {
@@ -336,26 +327,22 @@ export const playerSlice = createSlice({
       let newPatterns = _.cloneDeep(state.patterns);
       const pattern = newPatterns[patternIndex];
       if (pattern.beats.length <= 2) return;
-      pattern.beats = pattern.beats.filter(b => b.index !== atIndex);
-      pattern.beats = pattern.beats.map((beat, i) => ({ ...beat, index: i }));
-      pattern.beats.forEach((beat, i) => { beat.count[0].count = i + 1; });
+      pushHistory(state);
+      pattern.beats.splice(atIndex, 1);
       state.patterns = getStrokeTypes(newPatterns);
     },
     setGrouping: (state, action) => {
       if (!state.isEditMode || state.isPlaying) return;
+      pushHistory(state);
       const { patternIndex, beatIndex, grouping } = action.payload;
       let newPatterns = _.cloneDeep(state.patterns);
       const beat = newPatterns[patternIndex].beats[beatIndex];
-      for (const divisionIndex in beat.beatDivisions) {
-        beat.beatDivisions[divisionIndex] = [];
-        beat.beatDivisions[divisionIndex].push({
-          hand: grouping[divisionIndex],
-          type: 'ghost',
-          instrumentIndex: 2,
-          instrument: 'snare',
-          limb: 'hand',
-        });
-      }
+      beat.divisions = beat.divisions.map((existing, divisionIndex) => [{
+        limb: 'hand',
+        hand: grouping[divisionIndex],
+        type: 'ghost',
+        instrument: 'snare',
+      }]);
       state.patterns = getStrokeTypes(newPatterns);
     },
     dropPattern: (state, action) => {
@@ -364,13 +351,38 @@ export const playerSlice = createSlice({
       const stickingPattern = stickingPatterns.find(p => p.id === draggableId);
       if (!stickingPattern) return;
       let newPatterns = _.cloneDeep(state.patterns);
-      const beat = newPatterns[patternIndex].beats.find(b => +b.index === +destinationBeatIndex);
+      const beat = newPatterns[patternIndex].beats[+destinationBeatIndex];
       if (!beat || beat.division !== stickingPattern.sticking.length) return;
-      beat.beatDivisions = createObjectWithArrays(beat.division);
-      stickingPattern.sticking.forEach((note, i) => {
-        beat.beatDivisions[i].push({ ...note });
-      });
+      pushHistory(state);
+      beat.divisions = stickingPattern.sticking.map(note => [{
+        limb: 'hand',
+        instrument: note.instrument,
+        hand: note.hand,
+        type: note.type,
+      }]);
       state.patterns = getStrokeTypes(newPatterns);
+    },
+    undo: (state) => {
+      if (!state.isEditMode || state.isPlaying) return;
+      if (state.history.past.length === 0) return;
+      const previous = state.history.past.pop();
+      state.history.future.push({
+        patterns: _.cloneDeep(state.patterns),
+        instruments: _.cloneDeep(state.instruments),
+      });
+      state.patterns = previous.patterns;
+      state.instruments = previous.instruments;
+    },
+    redo: (state) => {
+      if (!state.isEditMode || state.isPlaying) return;
+      if (state.history.future.length === 0) return;
+      const next = state.history.future.pop();
+      state.history.past.push({
+        patterns: _.cloneDeep(state.patterns),
+        instruments: _.cloneDeep(state.instruments),
+      });
+      state.patterns = next.patterns;
+      state.instruments = next.instruments;
     },
   },
 });
@@ -397,6 +409,8 @@ export const {
   removeBeat,
   setGrouping,
   dropPattern,
+  undo,
+  redo,
 } = playerSlice.actions;
 
 export default playerSlice.reducer;

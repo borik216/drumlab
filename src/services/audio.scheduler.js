@@ -96,30 +96,29 @@ function buildSteps(patterns, instruments) {
   const steps = [];
   patterns.forEach((pattern, atPattern) => {
     for (let r = 0; r < pattern.repeat; r++) {
-      pattern.beats.forEach((beat) => {
-        for (let div = 0; div < beat.division; div++) {
+      pattern.beats.forEach((beat, atBeat) => {
+        beat.divisions.forEach((events, div) => {
           const hits = [];
           if (div === 0) hits.push({ sample: "metronome", volume: 0.4 });
 
-          const notes = beat.beatDivisions[div] || [];
-          notes.forEach((note) => {
+          events.forEach((event) => {
+            if (event.limb === "leg") {
+              const isActive = event.instrument === "kick" ? kickActive : hhPedalActive;
+              if (isActive) hits.push({ sample: mapSample(event.instrument), volume: 1 });
+              return;
+            }
             hits.push({
-              sample: mapSample(note.instrument),
-              volume: note.type === "accent" ? 1 : 0.2,
+              sample: mapSample(event.instrument),
+              volume: event.type === "accent" ? 1 : 0.2,
             });
           });
 
-          if (kickActive && beat.kicksAt.includes(div))
-            hits.push({ sample: "kick", volume: 1 });
-          if (hhPedalActive && beat.hhPedalsAt.includes(div))
-            hits.push({ sample: "hh pedal", volume: 1 });
-
           steps.push({
-            position: { atPattern, atBeat: beat.index, atDivision: div },
+            position: { atPattern, atBeat, atDivision: div },
             division: beat.division,
             hits,
           });
-        }
+        });
       });
     }
   });

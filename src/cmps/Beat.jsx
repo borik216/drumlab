@@ -6,14 +6,15 @@ import RowItem from "../layout/RowItem";
 import ColItem from "../layout/ColItem";
 import BeatToolbar from "../cmps/BeatToolbar/BeatToolbar";
 import { useSelector, useDispatch } from "react-redux";
+import { getCountLabel } from "../services/pattern.util";
 
 
 
-const Beat = memo(function Beat({ beat }) {
+const Beat = memo(function Beat({ beat, beatIndex }) {
   const dispatch = useDispatch()
   const { patternIndex } = useContext(PatternContext);
   const isCurrentBeat = useSelector((state) =>
-    state.player.currentLocation.atBeat === beat.index &&
+    state.player.currentLocation.atBeat === beatIndex &&
     state.player.currentLocation.atPattern === patternIndex
   );
 
@@ -27,27 +28,32 @@ const Beat = memo(function Beat({ beat }) {
   };
 
   const hideCount = useCallback((divisionIndex) => {
-    dispatch({type: 'player/toggleCount', payload: {patternIndex, beatIndex: beat.index, divisionIndex}})
-  }, [dispatch, patternIndex, beat.index])
+    dispatch({type: 'player/toggleCount', payload: {patternIndex, beatIndex, divisionIndex}})
+  }, [dispatch, patternIndex, beatIndex])
 
   return (
     <div className="flex flex-1 flex-col relative">
       <RowItem noBorder height={6}>
-        <BeatToolbar beatIndex={beat.index} division={beat.division} />
+        <BeatToolbar beatIndex={beatIndex} division={beat.division} />
       </RowItem>
-      <Droppable droppableId={`${beat.index}`}>
+      <Droppable droppableId={`${beatIndex}`}>
         {(provided, snapshot) => (
           <div
             className={className(snapshot.isDraggingOver)}
             ref={provided.innerRef}
             {...provided.droppableProps}
           >
-            {beat.count.map((count, index) => {
+            {beat.divisions.map((_, divisionIndex) => {
+              const count = {
+                count: getCountLabel(beatIndex, beat.division, divisionIndex),
+                hidden: beat.hiddenCounts[divisionIndex],
+              };
               return (
-                <ColItem noBorder={index === beat.count.length - 1} key={index}>
+                <ColItem noBorder={divisionIndex === beat.divisions.length - 1} key={divisionIndex}>
                   <BeatDivision
                     hideCount={hideCount}
-                    divisionIndex={index}
+                    divisionIndex={divisionIndex}
+                    beatIndex={beatIndex}
                     count={count}
                     beat={beat}
                   />

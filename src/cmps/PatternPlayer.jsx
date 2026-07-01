@@ -9,14 +9,18 @@ import {
   stop as schedulerStop,
 } from "../services/audio.scheduler.js";
 import Pattern from "./Pattern";
+import AddCircle from "../svg-cmp/AddCircle";
 import { useSelector, useDispatch, useStore } from "react-redux";
 import {
   play as playAction,
   stop as stopAction,
   setPlaybackPosition,
   setSamplesStatus,
+  undo,
+  redo,
 } from "../slices/player.slice.js";
 import InstrumentsPicker from "./InstrumentsPicker";
+import useKeyboardShortcuts from "../hooks/useKeyboardShortcuts.js";
 
 export default function PatternPlayer() {
   const tempo = useSelector((state) => state.player.tempo);
@@ -93,6 +97,15 @@ export default function PatternPlayer() {
     dispatch(stopAction());
   }
 
+  useKeyboardShortcuts(
+    [
+      { key: " ", handler: () => (isPlaying ? stop() : play()) },
+      { key: "z", ctrlOrCmd: true, shift: false, handler: () => dispatch(undo()) },
+      { key: "z", ctrlOrCmd: true, shift: true, handler: () => dispatch(redo()) },
+    ],
+    [isPlaying, samplesStatus]
+  );
+
   return (
     <div className="relative h-screen max-w-3xl mx-auto flex flex-col">
       <div className="relative flex-1 overflow-scroll scroll-smooth no-scrollbar h-full px-1 pt-14">
@@ -106,7 +119,7 @@ export default function PatternPlayer() {
             onClick={() => dispatch({ type: "player/addPattern" })}
             className="block mx-auto hover:bg-slate-200/30 rounded relative"
           >
-            <AddIcon />
+            <AddCircle />
           </button>
         )}
       </div>
@@ -119,24 +132,5 @@ export default function PatternPlayer() {
         samplesStatus={samplesStatus}
       />
     </div>
-  );
-}
-
-function AddIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className="w-14 h-14 stroke-green-500"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
   );
 }

@@ -14,23 +14,24 @@ const BeatDivision = memo(function BeatDivision({
   count,
   divisionIndex,
   beat,
+  beatIndex,
   hideCount
 }) {
-  const {index: beatIndex, kicksAt, hhPedalsAt, division} = beat
-  const notes = beat.beatDivisions[divisionIndex]
+  const { division } = beat
+  const events = beat.divisions[divisionIndex]
   const { dropNote, patternIndex } = useContext(PatternContext);
   const isCurrentDivision = useSelector((state) =>
     state.player.isPlaying &&
     state.player.currentLocation.atPattern === patternIndex &&
-    state.player.currentLocation.atBeat === beat.index &&
+    state.player.currentLocation.atBeat === beatIndex &&
     state.player.currentDivision === divisionIndex
   )
   const instruments = useSelector((state) => state.player.instruments)
 
   const isKickOn = instruments.filter(i => i.active).some(i => i.name === 'kick')
   const isHHPedalOn = instruments.filter(i => i.active).some(i => i.name === 'hh-pedal')
-  const hasKick = kicksAt.includes(divisionIndex);
-  const hasHHPedal = hhPedalsAt.includes(divisionIndex)
+  const hasKick = events.some(e => e.limb === 'leg' && e.instrument === 'kick');
+  const hasHHPedal = events.some(e => e.limb === 'leg' && e.instrument === 'hh-pedal')
 
   const className = (isCurrentDivision) => {
     return `
@@ -55,27 +56,18 @@ const BeatDivision = memo(function BeatDivision({
             instrument: instrument.name,
             beatIndex,
             divisionIndex,
-            instrumentIndex: instrument.index,
           };
-          if (notes.length > 0) {
-            let note = notes.find(
-              (note) => note.instrumentIndex === instrument.index
-            );
-            if (note) {
-              return (
-                <RowItem key={index}>
-                  <Note
-                    noteLocation={noteLocation}
-                    note={{ ...note }}
-                    
-                  />
-                </RowItem>
-              );
-            } else {
-              return <RowItem key={index} ><Note noteLocation={noteLocation}  /></RowItem>;
-            }
-          }
-          return <RowItem key={index}><Note noteLocation={noteLocation} key={index} /></RowItem>;
+          let note = events.find(
+            (event) => event.limb === 'hand' && event.instrument === instrument.name
+          );
+          return (
+            <RowItem key={index}>
+              <Note
+                noteLocation={noteLocation}
+                note={note ? { ...note } : undefined}
+              />
+            </RowItem>
+          );
         })}
         {isKickOn && (
           <KickNote

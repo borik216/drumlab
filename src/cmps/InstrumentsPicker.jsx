@@ -1,5 +1,4 @@
 import { useSelector, useDispatch } from "react-redux";
-// import DropMenu from "../layout/DropMenu";
 
 export default function InstrumentPicker() {
   const dispatch = useDispatch();
