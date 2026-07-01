@@ -5,7 +5,8 @@ import { Transition } from '@headlessui/react';
 export default function TooltipButton({ onClick, className, onHover, menuPosition, multiselect, tooltipText, buttonText ,onContextMenu,children }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isEditMode, isPlaying } = useSelector(state => state.player)
+  const isEditMode = useSelector((state) => state.player.isEditMode)
+  const isPlaying = useSelector((state) => state.player.isPlaying)
   const dropdownRef = useRef(null);
   const isActive = isEditMode && !isPlaying
 

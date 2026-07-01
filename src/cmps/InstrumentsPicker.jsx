@@ -1,13 +1,8 @@
-import PatternContext from "../context/PatternContext";
-import { useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
-// import DropMenu from "../layout/DropMenu";
 
 export default function InstrumentPicker() {
   const dispatch = useDispatch();
-  const { isKick, isHHPedal, instruments } = useSelector(
-    (state) => state.player
-  );
+  const instruments = useSelector((state) => state.player.instruments);
   let instrumentClass = (isPicked) => {
     return `
               capitalize
@@ -27,13 +22,6 @@ export default function InstrumentPicker() {
 
   function handleInstruments(instrument) {
     dispatch({ type: "player/toggleInstruments", payload: instrument });
-  }
-
-  function toggleKick() {
-    dispatch({ type: "player/toggleKick" });
-  }
-  function toggleHHPedal() {
-    dispatch({ type: "player/toggleHHPedal" });
   }
 
   return (
