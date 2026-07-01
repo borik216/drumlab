@@ -76,4 +76,4 @@ const Note = ({ note, noteLocation }) => {
   );
 };
 
-export default Note;
+export default React.memo(Note);

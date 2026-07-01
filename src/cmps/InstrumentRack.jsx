@@ -43,9 +43,7 @@ function getColor(instrument) {
 export default function IntsrumentRack() {
   const { patternIndex } = useContext(PatternContext);
   const dispatch = useDispatch();
-  const { instruments, isKick, isHHPedal } = useSelector(
-    (state) => state.player
-  );
+  const instruments = useSelector((state) => state.player.instruments);
 
   const pattern = useSelector((state) => state.player.patterns[patternIndex]);
 
@@ -107,7 +105,6 @@ export default function IntsrumentRack() {
               4
             </span>
           </TooltipButton>
-          {/* <RepeatAmount repeat={pattern.repeat} /> */}
         </RowItem>
         <RowItem>
           <p className="bg-slate-700 w-full h-8 text-white text-center pt-1 stacked-fractions">
@@ -134,30 +131,6 @@ export default function IntsrumentRack() {
       </ColItem>
     </div>
   );
-}
-
-function RepeatAmount({ repeat }) {
-  const { patternIndex } = useContext(PatternContext);
-  const dispatch = useDispatch();
-  const button = (
-    <div className="flex justify-center items-center bg-neutral-700 ">
-      <Repeat color={"#fff"} w={"w-5"} h={"h-5"} />
-      <span className="font-bold text-white">{repeat}</span>
-    </div>
-  );
-
-  function setRepeat(repeat) {
-    dispatch({
-      type: "player/setPatternRepeat",
-      payload: { patternIndex, repeat },
-    });
-  }
-
-  const menuItemClasses =
-    "text-center select-none hover:cursor-pointer hover:bg-neutral-700 hover:text-white";
-
-  const position = patternIndex === 0 ? "bottom" : "top";
-  return <DropMenu button={button} position={position}></DropMenu>;
 }
 
 function TrashIcon() {

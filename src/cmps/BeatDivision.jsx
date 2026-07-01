@@ -1,6 +1,6 @@
 import { DragDropContext } from "@hello-pangea/dnd";
 import { Droppable } from "@hello-pangea/dnd";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, memo } from "react";
 import PatternContext from "../context/PatternContext";
 import Note from "./Note";
 import KickNote from "./KickNote";
@@ -8,42 +8,29 @@ import HHPedalNote from './HHPedalNote'
 import RowItem from '../layout/RowItem'
 import ColItem from '../layout/ColItem'
 import TooltipButton from "../layout/TooltipButton"
-import {playSample} from '../services/audio.service.js'
 import { useSelector, useDispatch } from "react-redux";
 
-export default function BeatDivision({
+const BeatDivision = memo(function BeatDivision({
   count,
   divisionIndex,
-  currentDivision,
-  isCurrentBeat,
   beat,
   hideCount
 }) {
   const {index: beatIndex, kicksAt, hhPedalsAt, division} = beat
   const notes = beat.beatDivisions[divisionIndex]
-  const {isPlaying, instruments, currentLocation} = useSelector(state => state.player)
   const { dropNote, patternIndex } = useContext(PatternContext);
-  
-  const isCurrentDivision = (
-    isPlaying && 
-    beat.index === currentLocation.atBeat && 
-    patternIndex === currentLocation.atPattern &&
-    currentDivision === divisionIndex
+  const isCurrentDivision = useSelector((state) =>
+    state.player.isPlaying &&
+    state.player.currentLocation.atPattern === patternIndex &&
+    state.player.currentLocation.atBeat === beat.index &&
+    state.player.currentDivision === divisionIndex
   )
+  const instruments = useSelector((state) => state.player.instruments)
 
   const isKickOn = instruments.filter(i => i.active).some(i => i.name === 'kick')
   const isHHPedalOn = instruments.filter(i => i.active).some(i => i.name === 'hh-pedal')
   const hasKick = kicksAt.includes(divisionIndex);
   const hasHHPedal = hhPedalsAt.includes(divisionIndex)
-
-  if (isCurrentDivision) {
-    notes.forEach((note) => {
-      const noteVolume = note.type === "accent" ? 1 : 0.2;
-      playSample(note.instrument, noteVolume);
-    });
-    if (hasKick && isKickOn) playSample("kick", 1);
-    if (hasHHPedal && isHHPedalOn) playSample("hh pedal", 1)
-  }
 
   const className = (isCurrentDivision) => {
     return `
@@ -107,6 +94,7 @@ export default function BeatDivision({
       </div>
     </DragDropContext>
   );
-}
+})
 
+export default BeatDivision;
 

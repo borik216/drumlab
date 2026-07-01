@@ -1,16 +1,28 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Spinner } from "@chakra-ui/react";
 import Play from "../svg-cmp/Play";
 import Loop from "../svg-cmp/Loop";
 import Stop from "../svg-cmp/Stop";
 import Strokes from "../svg-cmp/Strokes";
 import InstrumentsPicker from "./InstrumentsPicker";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector, useDispatch, useStore } from "react-redux";
 import TooltipButton from "../layout/TooltipButton";
+import { exportJSON, importJSON } from "../services/persistence.service";
+import { loadPersistedState } from "../slices/player.slice";
 
-export default function PlayerControls({ play, stop, isPlaying, tempo }) {
+export default function PlayerControls({
+  play,
+  stop,
+  isPlaying,
+  tempo,
+  samplesStatus,
+}) {
   const dispatch = useDispatch();
   const [tempTempo, setTempTempo] = useState(tempo);
-  const { isEditMode, repeatAmount } = useSelector((state) => state.player);
+  const isEditMode = useSelector((state) => state.player.isEditMode);
+  const repeatAmount = useSelector((state) => state.player.repeatAmount);
+  const store = useStore();
+  const fileInputRef = useRef(null);
 
   function handleTempoChange({ target }) {
     const inputValue = target.value.trim(); // Remove leading and trailing whitespace
@@ -39,18 +51,48 @@ export default function PlayerControls({ play, stop, isPlaying, tempo }) {
     dispatch({ type: "player/toggleStrokes" });
   }
 
+  function handleImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = importJSON(ev.target.result);
+        dispatch(loadPersistedState(parsed));
+      } catch (err) {
+        console.error("Import failed:", err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
+
   const buttonClass =
     " flex justify-center items-center flex-1 px-4 py-2 bg-slate-700 text-white font-semibold transition ease-out hover:ease-in ";
   const hoverClass = " hover:bg-slate-700/90 ";
   const disabled = !isEditMode || isPlaying;
+  // Stop is always allowed while playing; Play waits until samples are decoded.
+  const playDisabled = !isPlaying && samplesStatus !== "ready";
   return (
     <div className="flex mt-4 mx-auto max-w-3xl justify-between w-full border border-black divide-x-2">
       <button
         onClick={isPlaying ? stop : play}
-        className={buttonClass + hoverClass}
+        disabled={playDisabled}
+        title={
+          samplesStatus === "loading"
+            ? "Loading drum sounds…"
+            : samplesStatus === "error"
+            ? "Drum sounds failed to load"
+            : undefined
+        }
+        className={`${buttonClass} ${
+          playDisabled ? " opacity-50 cursor-not-allowed " : hoverClass
+        }`}
       >
         {isPlaying ? (
           <Stop w={"w-8"} h={"h-8"} />
+        ) : samplesStatus === "loading" ? (
+          <Spinner />
         ) : (
           <Play w={"w-8"} h={"h-8"} />
         )}
@@ -165,22 +207,26 @@ export default function PlayerControls({ play, stop, isPlaying, tempo }) {
       <button
         disabled={disabled}
         className={`${buttonClass} ${!disabled && hoverClass}`}
+        onClick={() => exportJSON(store.getState().player)}
+        title="Export JSON"
       >
         <SaveIcon />
       </button>
-      {/*
-       */}
-    </div>
-  );
-}
-
-function ControlsButton({ onClick, children }) {
-  return (
-    <div
-      onClick={onClick}
-      className="flex justify-center items-center py-1 flex-1 hover:cursor-pointer hover:bg-slate-500"
-    >
-      {children}
+      <button
+        disabled={disabled}
+        className={`${buttonClass} ${!disabled && hoverClass}`}
+        onClick={() => fileInputRef.current?.click()}
+        title="Import JSON"
+      >
+        <ImportIcon />
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={handleImport}
+      />
     </div>
   );
 }
@@ -284,6 +330,26 @@ function SaveIcon() {
           d="M18.1716 1C18.702 1 19.2107 1.21071 19.5858 1.58579L22.4142 4.41421C22.7893 4.78929 23 5.29799 23 5.82843V20C23 21.6569 21.6569 23 20 23H4C2.34315 23 1 21.6569 1 20V4C1 2.34315 2.34315 1 4 1H18.1716ZM4 3C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21L5 21L5 15C5 13.3431 6.34315 12 8 12L16 12C17.6569 12 19 13.3431 19 15V21H20C20.5523 21 21 20.5523 21 20V6.82843C21 6.29799 20.7893 5.78929 20.4142 5.41421L18.5858 3.58579C18.2107 3.21071 17.702 3 17.1716 3H17V5C17 6.65685 15.6569 8 14 8H10C8.34315 8 7 6.65685 7 5V3H4ZM17 21V15C17 14.4477 16.5523 14 16 14L8 14C7.44772 14 7 14.4477 7 15L7 21L17 21ZM9 3H15V5C15 5.55228 14.5523 6 14 6H10C9.44772 6 9 5.55228 9 5V3Z"
           fill="#fff"
         ></path>{" "}
+      </g>
+    </svg>
+  );
+}
+
+function ImportIcon() {
+  return (
+    <svg
+      width="64px"
+      height="64px"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={"h-6 w-6"}
+    >
+      <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+      <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
+      <g id="SVGRepo_iconCarrier">
+        <path d="M12 16L7 11H10V4H14V11H17L12 16Z" fill="#fff" />
+        <path d="M5 20H19V18H5V20Z" fill="#fff" />
       </g>
     </svg>
   );

@@ -1,460 +1,58 @@
 import { DragDropContext } from '@hello-pangea/dnd'
-import { useState, useEffect } from 'react'
-import stickingPatterns from '../data/sticking-patterns'
-import { useSelector, useDispatch } from "react-redux";
-import PatternContext from "./PatternContext";
-import _ from 'lodash';
-
-function createObjectWithArrays(integer) {
-    let result = {};
-    for (let i = 0; i < integer; i++) {
-        result[i] = [];
-    }
-
-    return result;
-}
-
-const instrumentWeight = {
-    'snare': 0,
-    'hi hat': 1,
-    'open hat': 2,
-    'floor tom': 3,
-    'mid tom': 4,
-    'high tom': 5,
-    'ride': 6,
-    'crash': 7,
-}
-
-
-const getCount = (beatIndex, division) => {
-    switch (division) {
-      case 3:
-        return [
-          { count: beatIndex + 1, hidden: false },
-          { count: "+", hidden: false },
-          { count: "a", hidden: false },
-        ];
-      case 4:
-        return [
-          { count: beatIndex + 1, hidden: false },
-          { count: "e", hidden: false },
-          { count: "+", hidden: false },
-          { count: "a", hidden: false },
-        ];
-      case 6:
-        return [
-          { count: beatIndex + 1, hidden: false },
-          { count: "t", hidden: false },
-          { count: "t", hidden: false },
-          { count: "+", hidden: false },
-          { count: "t", hidden: false },
-          { count: "t", hidden: false },
-        ];
-      default:
-        break;
-    }
-  };
-
+import { useMemo } from 'react'
+import { useDispatch } from 'react-redux'
+import PatternContext from './PatternContext'
+import {
+    toggleNote as toggleNoteAction,
+    changeStrokeType as changeStrokeTypeAction,
+    addKick as addKickAction,
+    addHHPedal as addHHPedalAction,
+    resetPattern as resetPatternAction,
+    generateRandomPattern as generateRandomPatternAction,
+    dropNote as dropNoteAction,
+    changeBeatDivision as changeBeatDivisionAction,
+    addBeat as addBeatAction,
+    removeBeat as removeBeatAction,
+    setGrouping as setGroupingAction,
+    dropPattern as dropPatternAction,
+} from '../slices/player.slice'
 
 export default function PatternContextProvider({ index, children }) {
     const patternIndex = index
     const dispatch = useDispatch()
-    let pattern = useSelector(state => state.player.patterns[index])
-    let instruments = useSelector(state => state.player.instruments)
-    const [areStrokesRevealed, setStrokesRevealed] = useState(false)
-    const [beats, setBeats] = useState([])
 
-    
-    function updateState(pattern) {
-        dispatch({type: 'player/editPatterns', payload: {index: patternIndex, pattern}})
+    const handleDropPattern = (result) => {
+        const { destination, source, draggableId } = result
+        if (!destination || destination.droppableId === source.droppableId) return
+        dispatch(dropPatternAction({ patternIndex, draggableId, destinationBeatIndex: +destination.droppableId }))
     }
 
-    const dropPattern = (result) => {
-        const { destination, source, draggableId } = result;
-
-        if (!destination) {
-            return;
-        }
-
-        if (destination.droppableId === source.droppableId) {
-            return;
-        }
-
-        const currentPattern = _.cloneDeep(pattern)
-
-        // get pattern with matching id to the one being dragged
-        let stickingPattern = stickingPatterns.find(pattern => pattern.id === draggableId)
-
-        // get the beat position
-        const index = destination.droppableId
-
-        const currentBeat = currentPattern.beats.find(beat => +beat.index === +index)
-
-        if (currentBeat.division !== stickingPattern.sticking.length) return
-        currentBeat.beatDivisions = createObjectWithArrays(currentBeat.division)
-
-        stickingPattern.sticking.forEach((note, index) => {
-            currentBeat.beatDivisions[index].push({ ...note })
-        })
-
-        updateState(currentPattern)
-    }
-
-
-    const toggleNote = (noteLocation) => {
-        // Copy the beats array to avoid modifying the state directly
-        let updatedPattern = _.cloneDeep(pattern);
-
-        // Find the beat and divisionNotes based on the noteLocation
-        let atBeat = updatedPattern.beats.find(beat => beat.index === noteLocation.beatIndex);
-        let divisionNotes = atBeat.beatDivisions[noteLocation.divisionIndex];
-        // Find the index of the note in the divisionNotes based on the instrumentIndex
-        let noteIndex = divisionNotes.findIndex(note => note.instrumentIndex === noteLocation.instrumentIndex);
-
-
-        // Check if there's an 'R' hand note in divisionNotes
-        let hasRHand = divisionNotes.some(note => note.hand === 'R');
-
-        // Check if there's an 'L' hand note in divisionNotes
-        let hasLHand = divisionNotes.some(note => note.hand === 'L');
-
-        if (noteIndex !== -1) {
-            // If the note exists in noteLocation
-            let note = divisionNotes[noteIndex];
-
-            if (note.hand === 'R' && hasLHand) {
-                // If it's an 'R' note and there's an 'L' note in divisionNotes, remove the 'R' note
-                divisionNotes.splice(noteIndex, 1);
-            } else if (note.hand === 'R' && !hasLHand) {
-                // If it's an 'R' note and there are no 'L' notes in divisionNotes, change it to 'L'
-                note.hand = 'L';
-            } else if (note.hand === 'L') {
-                // If it's an 'L' note, remove the note
-                divisionNotes.splice(noteIndex, 1);
-            }
-        } else {
-            // If the note doesn't exist in noteLocation
-            if (!hasRHand) {
-                // If there's no 'R' note in divisionNotes, create an 'R' note
-                divisionNotes.push({ hand: 'R', type: 'ghost', instrumentIndex: noteLocation.instrumentIndex, instrument: noteLocation.instrument });
-            } else if (hasRHand && !hasLHand) {
-                // If there's an 'R' note in divisionNotes and no 'L' note, create an 'L' note
-                divisionNotes.push({ hand: 'L', type: 'ghost', instrumentIndex: noteLocation.instrumentIndex, instrument: noteLocation.instrument });
-            }
-        }
-
-
-        updateState(updatedPattern)
-    };
-
-
-
-    function changeStrokeType(event, noteLocation) {
-        event.preventDefault()
-
-        // Copy the beats array to avoid modifying the state directly
-        let updatedPattern = _.cloneDeep(pattern);
-
-        // Find the beat and divisionNotes based on the noteLocation
-        let atBeat = updatedPattern.beats.find(beat => beat.index === noteLocation.beatIndex);
-        let divisionNotes = atBeat.beatDivisions[noteLocation.divisionIndex];
-
-        // Find the index of the note in the divisionNotes based on the instrumentIndex
-        let noteIndex = divisionNotes.findIndex(note => note.instrumentIndex === noteLocation.instrumentIndex);
-
-        if (noteIndex !== -1) {
-            let note = divisionNotes[noteIndex]
-            if (note.type === "ghost") {
-                note.type = "accent"
-            } else if (note.type === "accent") {
-                note.type = "ghost"
-            }
-
-        } else {
-            return;
-        }
-
-        updateState(updatedPattern)
-    }
-
-
-    function addKick(beatIndex, pulseIndex) {
-
-        const newPattern = _.cloneDeep(pattern)
-        const updatedBeat = newPattern.beats.find(b => b.index === beatIndex)
-        if (updatedBeat.kicksAt.includes(pulseIndex)) {
-            updatedBeat.kicksAt = updatedBeat.kicksAt.filter(i => i !== pulseIndex)
-        } else {
-            updatedBeat.kicksAt.push(pulseIndex)
-        }
-
-        updateState(newPattern)
-    }
-
-    function addHHPedal(beatIndex, pulseIndex) {
-
-        const newPattern = _.cloneDeep(pattern)
-        const updatedBeat = newPattern.beats.find(b => b.index === beatIndex)
-        if (updatedBeat.hhPedalsAt.includes(pulseIndex)) {
-            updatedBeat.hhPedalsAt = updatedBeat.hhPedalsAt.filter(i => i !== pulseIndex)
-        } else {
-            updatedBeat.hhPedalsAt.push(pulseIndex)
-        }
-
-        updateState(newPattern)
-    }
-
-
-    function resetPattern() {
-        const updatedPattern = _.cloneDeep(pattern)
-
-        updatedPattern.beats.forEach(beat => {
-            beat.beatDivisions = createObjectWithArrays(beat.division)
-            beat.kicksAt = []
-            beat.hhPedalsAt = []
-        })
-
-        updateState(updatedPattern)
-    }
-
-
-    function generateRandomPattern() {
-
-        let updatedPattern = _.cloneDeep(pattern)
-        let pickedInstruments = _.cloneDeep(instruments.filter(i => i.active && i.limb==='hand'))
-        for (let i = 0; i < updatedPattern.beats.length; i++) {
-            let currentBeat = updatedPattern.beats[i]
-            let currentBeatDivision = currentBeat.division
-
-            for (let j = 0; j < currentBeatDivision; j++) {
-                currentBeat.beatDivisions[j] = []
-                currentBeat.kicksAt = []
-
-                let randomInstrumentIdx = Math.floor(Math.random() * pickedInstruments.length)
-                let instrument = pickedInstruments[randomInstrumentIdx]
-                let type = Math.random() >= 0.5 ? "accent" : "ghost"
-                let hand = Math.random() >= 0.5 ? "R" : "L"
-                let note = { hand, type, instrument: instrument.name, instrumentIndex: instrument.index }
-                currentBeat.beatDivisions[j].push(note)
-            }
-        }
-
-        updateState(updatedPattern)
-    }
-
-    function handleInstruments(instrument) {
-        const doesInstrumentExist = instruments.find(i => i.name === instrument);
-
-        if (doesInstrumentExist) {
-            const updatedArray = instruments.filter((i) => i.name !== instrument);
-            setInstruments(updatedArray);
-        } else {
-            const newInstrument = { name: instrument, index: instrumentWeight[instrument] }
-            const prevInstruments = [...instruments]
-            prevInstruments.push(newInstrument)
-
-            prevInstruments.forEach(i => i.index = instrumentWeight[i.name])
-            const newInstruments = prevInstruments.sort((a, b) => a.index - b.index).map((i, index) => {
-                return { name: i.name, index }
-            })
-
-            setInstruments(newInstruments);
-        }
-    }
-
-    function dropNote(result) {
-        const { destination, source, draggableId } = result;
-
-        if (!destination || source.index === destination.index) {
-            return;
-        }
-
-        const noteData = draggableId.split('-')
-        const instrument = noteData[0]
-        const beatIndex = +noteData[1]
-        const beatDivisionIndex = +noteData[2]
-        const instrumentIndex = +noteData[3]
-
-        const updatedPattern = _.cloneDeep(pattern)
-        const beat = updatedPattern.beats.find(beat => beat.index === beatIndex)
-        const divisionNotes = beat.beatDivisions[beatDivisionIndex]
-        const sourceNote = divisionNotes.find(note => note.instrumentIndex === instrumentIndex)
-        const destinationNote = divisionNotes.find(note => note.instrumentIndex === +destination.index)
-
-        if (destinationNote) {
-            const indexHolder = sourceNote.instrumentIndex
-            const instrumentHolder = sourceNote.instrument
-            sourceNote.instrumentIndex = destinationNote.instrumentIndex
-            sourceNote.instrument = destinationNote.instrument
-            destinationNote.instrumentIndex = indexHolder
-            destinationNote.instrument = instrumentHolder
-        }
-        else {
-            sourceNote.instrumentIndex = destination.index
-            let instrument = instruments.find(i => i.index === destination.index)
-            sourceNote.instrument = instrument.name
-            console.log(sourceNote)
-        }
-
-        
-        updateState(updatedArray)
-    }
-
-
-
-    function changeBeatDivision(beatIndex, division) {
-        let newPattern = _.cloneDeep(pattern)
-        const beat = newPattern.beats.find(beat => beat.index === beatIndex)
-        if(beat.division === division) return
-
-        beat.division = division
-        beat.count = getCount(beatIndex, division)
-        beat.beatDivisions = createObjectWithArrays(beat.division)
-        beat.kicksAt = []
-        beat.hhPedalsAt = []
-
-        updateState(newPattern)
-    }
-
-    function toggleStrokeTypes() {
-        setStrokesRevealed(prev => !prev)
-    }
-
-    function getStrokeTypes(pattern) {
-        let newPattern = _.cloneDeep(pattern)
-
-        let allNotes = []
-
-        for (const beat of newPattern.beats) {
-            for (const divIndex in beat.beatDivisions) {
-                allNotes = allNotes.concat(beat.beatDivisions[divIndex])
-            }
-        }
-
-        allNotes.forEach((note, index) => {
-            let currentNote = note
-
-            let startFrom = index + 1
-            let nextNote = allNotes.slice(startFrom).find(note => note.hand === currentNote.hand)
-            if (!nextNote) {
-                nextNote = allNotes.find(note => {
-                    return note.hand === currentNote.hand
-                })
-            }
-
-
-            if (currentNote.type === "accent" && nextNote.type === "accent") {
-                currentNote.stroke = 'full'
-            } else if (currentNote.type === "accent" && nextNote.type === "ghost") {
-                currentNote.stroke = 'down'
-            } else if (currentNote.type === "ghost" && nextNote.type === "ghost") {
-                currentNote.stroke = 'tap'
-            } else if (currentNote.type === "ghost" && nextNote.type === "accent") {
-                currentNote.stroke = 'up'
-            }
-        })
-
-        return newPattern
-    }
-
-    function addBeat(atIndex) {
-        
-        if(pattern.beats.length >= 5) return
-        let newBeat = {
-            division: 4,
-            count: [
-                { count: atIndex, hidden: false },
-                { count: "e", hidden: false },
-                { count: "+", hidden: false },
-                { count: "a", hidden: false },
-              ],
-            beatDivisions: {
-              0: [],
-              1: [],
-              2: [],
-              3: []
-            },
-            kicksAt: [],
-            hhPedalsAt: []
-          };
-
-        let oldPattern = _.cloneDeep(pattern)
-        
-        let updatedPattern =
-          {
-            ...oldPattern,
-            beats: [
-                ...oldPattern.beats.slice(0, atIndex),
-                newBeat,
-                ...oldPattern.beats.slice(atIndex)
-              ]
-          }
-        
-      
-        updatedPattern.beats = updatedPattern.beats.map((beat, i) => ({ ...beat, index: i }))
-        updatedPattern.beats.forEach((beat, i) => {
-            beat.count[0].count = i + 1
-        })
-        
-        updateState(updatedPattern)
-      }
-
-      function removeBeat(atIndex) {
-        if(pattern.beats.length <= 2) return
-        let updatedPattern = _.cloneDeep(pattern)
-
-        updatedPattern.beats = updatedPattern.beats.filter(beat => beat.index !== atIndex)
-        updatedPattern.beats = updatedPattern.beats.map((beat, i) => ({...beat, index: i}))
-        
-        updatedPattern.beats.forEach((beat, i) => {
-            beat.count[0].count = i + 1
-        })
-
-        updateState(updatedPattern)
-      }
-
-      function setGrouping(grouping, beatIndex) {
-        let updatedPattern = _.cloneDeep(pattern)
-        let beat = updatedPattern.beats[beatIndex]
-        let beatDivisions = beat.beatDivisions
-
-        for(const divisionIndex in beatDivisions) {
-            beatDivisions[divisionIndex] = []
-            beatDivisions[divisionIndex].push({hand: grouping[divisionIndex], type: 'ghost', instrumentIndex: 2, instrument: 'snare', limb: 'hand'})
-        }
-
-        
-
-        updateState(updatedPattern)
-      }
-
-
-    const context = {
-        areStrokesRevealed,
-        addKick,
-        addHHPedal,
-        handleInstruments,
-        toggleNote,
-        dropNote,
-        generateRandomPattern,
-        changeStrokeType,
-        resetPattern,
-        changeBeatDivision,
-        setGrouping,
-        getStrokeTypes,
-        toggleStrokeTypes,
-        addBeat,
-        removeBeat,
-        pattern,
-        patternIndex
-    }
+    const context = useMemo(() => ({
+        patternIndex,
+        toggleNote: (loc) => dispatch(toggleNoteAction({ patternIndex, ...loc })),
+        changeStrokeType: (e, loc) => {
+            e.preventDefault()
+            dispatch(changeStrokeTypeAction({ patternIndex, ...loc }))
+        },
+        addKick: (beatIndex, pulseIndex) => dispatch(addKickAction({ patternIndex, beatIndex, pulseIndex })),
+        addHHPedal: (beatIndex, pulseIndex) => dispatch(addHHPedalAction({ patternIndex, beatIndex, pulseIndex })),
+        resetPattern: () => dispatch(resetPatternAction({ patternIndex })),
+        generateRandomPattern: () => dispatch(generateRandomPatternAction({ patternIndex })),
+        dropNote: (result) => {
+            if (!result.destination || result.source.index === result.destination.index) return
+            dispatch(dropNoteAction({ patternIndex, draggableId: result.draggableId, destinationIndex: result.destination.index }))
+        },
+        changeBeatDivision: (beatIndex, division) => dispatch(changeBeatDivisionAction({ patternIndex, beatIndex, division })),
+        addBeat: (atIndex) => dispatch(addBeatAction({ patternIndex, atIndex })),
+        removeBeat: (atIndex) => dispatch(removeBeatAction({ patternIndex, atIndex })),
+        setGrouping: (grouping, beatIndex) => dispatch(setGroupingAction({ patternIndex, beatIndex, grouping })),
+    }), [patternIndex, dispatch])
 
     return (
         <PatternContext.Provider value={context}>
-            <DragDropContext onDragEnd={dropPattern}>
+            <DragDropContext onDragEnd={handleDropPattern}>
                 {children}
             </DragDropContext>
         </PatternContext.Provider>
     )
 }
-

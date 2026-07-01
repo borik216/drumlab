@@ -1,34 +1,15 @@
 import DivisionPicker from "./DivisionPicker";
-import GroupingsMenu from "./GroupingsMenu";
 import Clear from "../../svg-cmp/Clear";
 import { useContext } from "react";
 import PatternContext from "../../context/PatternContext";
 import { useSelector, useDispatch } from "react-redux";
 import TooltipButton from "../../layout/TooltipButton";
-
-
-function generateLRCombinations(n) {
-  // Base case: if n is 0, return an array with an empty string
-  if (n === 0) {
-    return [''];
-  }
-
-  // Recursive case: generate combinations for n-1 and append 'L' and 'R'
-  const prevCombinations = generateLRCombinations(n - 1);
-  const result = [];
-
-  // Append 'L' and 'R' to each combination from the previous step
-  for (const combo of prevCombinations) {
-    result.push(combo + 'L');
-    result.push(combo + 'R');
-  }
-
-  return result;
-}
+import { generateLRCombinations } from "../../services/pattern.util";
 
 export default function BeatToolbar({ beatIndex, division }) {
   const { addBeat, removeBeat, changeBeatDivision, patternIndex, setGrouping } = useContext(PatternContext);
-  const { isPlaying, isEditMode } = useSelector((state) => state.player);
+  const isPlaying = useSelector((state) => state.player.isPlaying);
+  const isEditMode = useSelector((state) => state.player.isEditMode);
   const buttonClass = "w-1/5 flex-1 flex justify-center items-center relative ";
   const regularBtnHover =
     " hover:text-white hover:fill-white hover:bg-neutral-700 ";

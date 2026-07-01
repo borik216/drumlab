@@ -9,12 +9,11 @@ import TooltipButton from "../layout/TooltipButton";
 
 export default function Pattern({ index, playerRef }) {
   const pattern = useSelector((state) => state.player.patterns[index]);
-  const currentLocation = useSelector((state) => state.player.currentLocation);
+  const isCurrentPattern = useSelector((state) => state.player.isPlaying && state.player.currentLocation.atPattern === index);
   const isEditMode = useSelector((state) => state.player.isEditMode);
   const isPlaying = useSelector((state) => state.player.isPlaying);
 
   const showToolbar = isEditMode && !isPlaying;
-  const isCurrentPattern = isPlaying && currentLocation.atPattern === index;
   return (
     <PatternContextProvider index={index}>
       {showToolbar && <PatternToolbar patternIndex={index} />}
@@ -40,7 +39,7 @@ function Measure({ patternIndex }) {
 function PatternToolbar({ patternIndex }) {
   const dispatch = useDispatch();
   const { generateRandomPattern, resetPattern } = useContext(PatternContext);
-  const patternsAmount = useSelector((state) => state.player.patterns).length;
+  const patternsAmount = useSelector((state) => state.player.patterns.length);
 
   function movePattern(direction) {
     if (
